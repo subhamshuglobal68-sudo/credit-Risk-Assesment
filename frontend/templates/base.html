@@ -62,12 +62,21 @@
       <button class="icon-button" aria-label="History"><span class="material-symbols-outlined">history</span></button>
       <div class="user-menu">
         <span class="avatar" id="user-avatar-btn">
-          {{ session['user']['email'][0] | upper if (session.get('user') and session['user'].get('email')) else 'U' }}
+          {{ (session['user'].get('name', '')[0] if session['user'].get('name') else session['user']['email'][0]) | upper if (session.get('user') and session['user'].get('email')) else 'U' }}
         </span>
         <div class="user-dropdown" id="user-dropdown-menu">
-          <div class="user-dropdown-email">
+          {% if session.get('user') and session['user'].get('name') %}
+          <div class="user-dropdown-name" style="font-weight: 600; padding: 12px 16px 4px; color: var(--text);">
+            {{ session['user']['name'] }}
+          </div>
+          <div class="user-dropdown-email" style="font-size: 12px; color: var(--muted); padding: 0 16px 12px; border-bottom: 1px solid var(--border);">
+            {{ session['user']['email'] }}
+          </div>
+          {% else %}
+          <div class="user-dropdown-email" style="border-bottom: 1px solid var(--border);">
             {{ session['user']['email'] if (session.get('user') and session['user'].get('email')) else 'user@crea.ai' }}
           </div>
+          {% endif %}
           <a href="{{ url_for('logout') }}" class="user-dropdown-item">
             <span class="material-symbols-outlined">logout</span>
             <span>Logout</span>

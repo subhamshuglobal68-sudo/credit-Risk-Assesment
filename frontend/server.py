@@ -28,7 +28,15 @@ BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:5000")
 def check_auth():
     if app.config.get("TESTING"):
         return
-    allowed_endpoints = ["login", "register", "static"]
+    allowed_endpoints = [
+        "login",
+        "register",
+        "verify_otp",
+        "resend_otp",
+        "google_auth",
+        "google_auth_callback",
+        "static"
+    ]
     if request.endpoint in allowed_endpoints:
         return
     if not request.endpoint:
@@ -43,14 +51,16 @@ def login():
     error = None
     if request.method == "POST":
         email = request.form.get("email")
-        password = request.form.get("password")
-        
-        resp = proxy_to_backend("/api/auth/login", {"email": email, "password": password}, method="POST")
-        if "error" in resp:
-            error = resp["error"]
+        if not email:
+            error = "Email address is required"
+        elif "@" not in email or "." not in email:
+            error = "Invalid email format"
         else:
-            session["user"] = resp["user"]
-            return redirect(url_for("index"))
+            resp = proxy_to_backend("/api/auth/send-otp", {"email": email}, method="POST")
+            if "error" in resp:
+                error = resp["error"]
+            else:
+                return redirect(url_for("verify_otp", email=email, action="login"))
     return render_template("login.html", error=error)
 
 @app.route("/register", methods=["GET", "POST"])
@@ -59,29 +69,77 @@ def register():
         return redirect(url_for("index"))
     error = None
     if request.method == "POST":
+        name = request.form.get("name")
         email = request.form.get("email")
-        password = request.form.get("password")
-        confirm_password = request.form.get("confirm_password")
         
-        if not email or not password or not confirm_password:
+        if not name or not email:
             error = "All fields are required"
-        elif password != confirm_password:
-            error = "Passwords do not match"
-        elif len(password) < 6:
-            error = "Password must be at least 6 characters long"
         elif "@" not in email or "." not in email:
             error = "Invalid email format"
         else:
-            resp = proxy_to_backend("/api/auth/register", {"email": email, "password": password}, method="POST")
+            resp = proxy_to_backend("/api/auth/send-otp", {"email": email}, method="POST")
             if "error" in resp:
                 error = resp["error"]
             else:
-                login_resp = proxy_to_backend("/api/auth/login", {"email": email, "password": password}, method="POST")
-                if "error" not in login_resp:
-                    session["user"] = login_resp["user"]
-                    return redirect(url_for("index"))
-                return redirect(url_for("login"))
+                return redirect(url_for("verify_otp", email=email, action="register", name=name))
     return render_template("register.html", error=error)
+
+@app.route("/verify-otp", methods=["GET", "POST"])
+def verify_otp():
+    if "user" in session:
+        return redirect(url_for("index"))
+    email = request.args.get("email") or request.form.get("email")
+    action = request.args.get("action") or request.form.get("action") or "login"
+    name = request.args.get("name") or request.form.get("name") or ""
+    
+    if not email:
+        return redirect(url_for("login"))
+        
+    error = None
+    if request.method == "POST":
+        code = request.form.get("code")
+        if not code or len(code) != 6:
+            error = "Please enter the full 6-digit code"
+        else:
+            resp = proxy_to_backend("/api/auth/verify-otp", {"email": email, "code": code, "name": name}, method="POST")
+            if "error" in resp:
+                error = resp["error"]
+            else:
+                session["user"] = resp["user"]
+                return redirect(url_for("index"))
+                
+    return render_template("verify_otp.html", email=email, action=action, name=name, error=error)
+
+@app.route("/resend-otp", methods=["POST"])
+def resend_otp():
+    data = request.get_json() or {}
+    email = data.get("email")
+    if not email:
+        return jsonify({"error": "Email is required"}), 400
+    resp = proxy_to_backend("/api/auth/send-otp", {"email": email}, method="POST")
+    return jsonify(resp)
+
+@app.route("/auth/google")
+def google_auth():
+    if "user" in session:
+        return redirect(url_for("index"))
+    return render_template("google_mock.html")
+
+@app.route("/auth/google/callback")
+def google_auth_callback():
+    if "user" in session:
+        return redirect(url_for("index"))
+    email = request.args.get("email")
+    name = request.args.get("name")
+    if not email:
+        return redirect(url_for("login"))
+        
+    resp = proxy_to_backend("/api/auth/google-login", {"email": email, "name": name}, method="POST")
+    if "error" in resp:
+        return render_template("login.html", error=resp["error"])
+        
+    session["user"] = resp["user"]
+    return redirect(url_for("index"))
 
 @app.route("/logout")
 def logout():

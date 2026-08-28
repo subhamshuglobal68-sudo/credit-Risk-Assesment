@@ -100,12 +100,12 @@ class TestAuthRoutes:
     def test_login_page_renders(self, client):
         resp = client.get("/login")
         assert resp.status_code == 200
-        assert b"Welcome back" in resp.data
+        assert b"Login" in resp.data
 
     def test_register_page_renders(self, client):
         resp = client.get("/register")
         assert resp.status_code == 200
-        assert b"Create your account" in resp.data
+        assert b"Create an account" in resp.data
 
     def test_protected_route_redirects(self):
         # Setup clean test client with TESTING = False to verify redirects
