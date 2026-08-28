@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Settings — CreditGuard AI{% endblock %}
+{% block breadcrumb %}Settings{% endblock %}
+{% block content %}
+<header class="page-header"><h1>Settings</h1><p class="muted">Display preferences do not alter model features or policy.</p></header>
+{% if error %}<div class="alert alert-warning">{{ error }}</div>{% endif %}
+<section class="panel"><h2>Currency</h2><form method="post" class="settings-form"><div class="field"><label for="currency">Currency</label><select id="currency" name="currency"><option value="INR"{% if currency == 'INR' %} selected{% endif %}>₹ INR</option><option value="USD"{% if currency == 'USD' %} selected{% endif %}>$ USD</option></select></div><p class="muted">Prototype exchange rate: 1 USD = ₹{{ '%.2f'|format(config.USD_TO_INR_RATE) }}. It is configurable in <code>config.py</code> and is not live.</p><button class="btn btn-primary" type="submit">Save currency</button></form></section>
+<section class="panel"><h2>Appearance</h2><label class="switch"><input type="checkbox" id="reduce-motion"><span class="track"></span><span>Reduce motion (disable UI animations)</span></label><p class="muted">When enabled, all transitions and animations are minimized. Respects system <em>prefers-reduced-motion</em> setting.</p></section>
+<section class="panel"><h2>Model information</h2><p class="muted">Base/model currency: INR prototype units. Currency is normalised before inference; derived ratios and categorical features are never converted.</p><p class="muted">Decision policy: approve at {{ config.APPROVE_SCORE_THRESHOLD }}+, reject below {{ config.REJECT_SCORE_THRESHOLD }}, otherwise review.</p></section>
+{% endblock %}

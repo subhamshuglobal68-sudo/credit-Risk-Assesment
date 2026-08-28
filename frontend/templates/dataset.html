@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Upload Dataset — CreditGuard AI{% endblock %}
+{% block breadcrumb %}Batch Analysis{% endblock %}
+{% block content %}
+<header class="page-header">
+  <h1>Batch Dataset Assessment</h1>
+  <p class="muted">Upload a tabular dataset to score every application with the trained model.</p>
+</header>
+{% if not model_ready %}
+<div class="alert alert-warning"><strong>Model not trained yet.</strong><p>{{ error }}</p></div>
+{% else %}
+<section class="panel">
+  <form id="dataset-form">
+    <div class="upload-row">
+      <label class="file-picker" for="dataset-file">Choose dataset</label>
+      <input id="dataset-file" name="dataset" type="file" accept=".csv,.txt,.json,.xlsx,.xls" required>
+      <label class="field compact-field">Dataset currency<select id="dataset-currency" name="currency"><option value="INR"{% if currency == 'INR' %} selected{% endif %}>₹ INR</option><option value="USD"{% if currency == 'USD' %} selected{% endif %}>$ USD</option></select></label>
+      <button type="submit" class="btn btn-primary">PROCESS DATASET</button>
+    </div>
+    <p class="muted small">Supported formats: CSV, JSON, XLSX, XLS. Use the model feature column names; extra columns are ignored. Maximum 5,000 rows.</p>
+    <div id="dataset-status" class="status-banner hidden"></div>
+    <div id="dataset-elapsed" class="muted small" style="margin-top: 8px;"></div>
+  </form>
+</section>
+
+<section id="dataset-summary" class="panel hidden">
+  <h2 id="dataset-title">Results</h2>
+  <div class="batch-total">Total applications: <strong id="batch-total-count">0</strong></div>
+  <p class="muted">Select a category to view applications. The counts use the final decision returned by the existing model decision engine.</p>
+  <div id="category-buttons" class="category-selector" aria-label="Result categories"></div>
+</section>
+
+<section id="results-container" class="panel hidden" aria-live="polite">
+  <div class="panel-heading"><h2 id="selected-results-title"></h2><button id="clear-result-selection" class="btn" type="button">Hide results</button></div>
+  <div id="selected-results"></div>
+</section>
+
+<section id="batch-errors-panel" class="panel hidden"><h2>Rows Not Processed</h2><div id="batch-errors"></div></section>
+{% endif %}
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/dataset.js') }}"></script>{% endblock %}

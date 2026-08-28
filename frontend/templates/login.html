@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login - CREA AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<style>
+  .auth-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 24px;
+    background: var(--bg);
+  }
+  .auth-card {
+    width: 100%;
+    max-width: 400px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 36px;
+    border-radius: 2px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  }
+  .auth-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+  .auth-logo .brand-mark {
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #002e6a;
+    font: 700 17px "Geist", sans-serif;
+  }
+  .auth-logo .brand-title {
+    color: var(--accent);
+    font-size: 24px;
+    font-weight: 700;
+  }
+  .auth-title {
+    font-size: 20px;
+    margin-bottom: 24px;
+    text-align: center;
+    font-weight: 600;
+  }
+  .auth-field {
+    margin-bottom: 20px;
+  }
+  .auth-field label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 700;
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+  }
+  .auth-field input {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: "Inter", sans-serif;
+    transition: border-color var(--dur-fast) var(--ease);
+  }
+  .auth-field input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .auth-btn {
+    width: 100%;
+    margin-top: 10px;
+  }
+  .auth-footer {
+    margin-top: 24px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .auth-footer a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .auth-footer a:hover {
+    text-decoration: underline;
+  }
+</style>
+</head>
+<body class="dark">
+<div class="auth-container">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="brand-mark">▦</div>
+      <div class="brand-title">CREA AI</div>
+    </div>
+    <h2 class="auth-title">Welcome back</h2>
+    
+    {% if error %}
+    <div class="alert alert-warning" style="margin-bottom: 20px; font-size: 13px; border-radius: 2px; padding: 12px 16px; display: flex; align-items: center; gap: 8px;">
+      <span class="material-symbols-outlined" style="color: var(--warn); font-size: 18px;">warning</span>
+      <span>{{ error }}</span>
+    </div>
+    {% endif %}
+    
+    <form method="POST" action="{{ url_for('login') }}">
+      <div class="auth-field">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" name="email" required placeholder="name@company.com" autocomplete="email">
+      </div>
+      <div class="auth-field">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn btn-primary auth-btn">Sign In</button>
+    </form>
+    
+    <div class="auth-footer">
+      Don't have an account? <a href="{{ url_for('register') }}">Create an account</a>
+    </div>
+  </div>
+</div>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+﻿{
+    "employment_type":  "SALARIED",
+    "employment_duration_years":  5,
+    "housing_status":  "OWN",
+    "credit_history_years":  5,
+    "late_payments_last_2y":  0,
+    "existing_debt":  5000,
+    "num_open_accounts":  2,
+    "loan_amount":  10000,
+    "income":  50000,
+    "age":  35
+}

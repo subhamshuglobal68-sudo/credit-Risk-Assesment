@@ -1,0 +1,25 @@
+# Virtual environments
+venv/
+.venv/
+env/
+**/venv/
+**/.venv/
+**/env/
+
+# Python cache & build files
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/.pytest_cache/
+**/*.egg-info/
+**/*.log
+
+# Operating System files
+.DS_Store
+Thumbs.db
+
+# Flask instances & Databases
+**/instance/
+**/*.db
+**/.env

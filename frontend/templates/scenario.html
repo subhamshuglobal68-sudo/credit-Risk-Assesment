@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% block title %}What-If Simulator — CreditGuard AI{% endblock %}
+{% block breadcrumb %}What-If Simulator{% endblock %}
+{% block content %}
+<header class="page-header">
+  <h1>What-If Credit Improvement Simulator</h1>
+  <p class="muted">Adjust a borrower's profile to see how the <strong>same trained model</strong> re-scores it. This is an educational model-analysis tool — it does <strong>not</strong> tell anyone how to "get approved".</p>
+</header>
+
+<div class="wi-banner">
+  <span class="material-symbols-outlined">info</span>
+  <p>Scenario results are <strong>Hypothetical</strong> simulations of the model's behaviour, not a promise of any credit outcome. Original decisions are never overwritten.</p>
+</div>
+
+{% if error %}
+<div class="alert alert-warning">
+  <strong>Model not trained yet.</strong>
+  <p>{{ error }}</p>
+</div>
+{% else %}
+<div class="wi-layout">
+  <aside class="wi-controls panel">
+    <div class="wi-controls-head">
+      <h2>Build a Scenario</h2>
+      <button class="btn btn-sm" id="wi-reset" title="Reset to original">Reset</button>
+    </div>
+
+    <div class="wi-section">
+      <h3 class="wi-section-title">Income</h3>
+      <div class="wi-slider-row">
+        <label class="wi-slider-label" for="wi-income">Monthly Income (₹)</label>
+        <input type="range" id="wi-income" class="wi-slider" min="10000" max="300000" step="5000">
+        <span class="wi-slider-value" id="wi-income-val">—</span>
+      </div>
+      <div class="wi-presets">
+        <button class="preset-chip" data-preset="income-up">+20%</button>
+        <button class="preset-chip" data-preset="income-down">-20%</button>
+      </div>
+    </div>
+
+    <div class="wi-section">
+      <h3 class="wi-section-title">Debt</h3>
+      <div class="wi-slider-row">
+        <label class="wi-slider-label" for="wi-debt">Existing Debt (₹)</label>
+        <input type="range" id="wi-debt" class="wi-slider" min="0" max="200000" step="2000">
+        <span class="wi-slider-value" id="wi-debt-val">—</span>
+      </div>
+      <div class="wi-presets">
+        <button class="preset-chip" data-preset="debt-down">-20%</button>
+        <button class="preset-chip" data-preset="debt-zero">Pay off 50%</button>
+      </div>
+    </div>
+
+    <div class="wi-section">
+      <h3 class="wi-section-title">Credit Behaviour</h3>
+      <div class="wi-slider-row">
+        <label class="wi-slider-label" for="wi-late">Late Payments (last 2 yrs)</label>
+        <input type="range" id="wi-late" class="wi-slider" min="0" max="5" step="1">
+        <span class="wi-slider-value" id="wi-late-val">—</span>
+      </div>
+      <div class="wi-slider-row">
+        <label class="wi-slider-label" for="wi-accounts">Open Credit Accounts</label>
+        <input type="range" id="wi-accounts" class="wi-slider" min="0" max="6" step="1">
+        <span class="wi-slider-value" id="wi-accounts-val">—</span>
+      </div>
+      <div class="wi-presets">
+        <button class="preset-chip" data-preset="clean-history">✓ Perfect history</button>
+      </div>
+    </div>
+
+    <div class="wi-section">
+      <h3 class="wi-section-title">Loan</h3>
+      <div class="wi-slider-row">
+        <label class="wi-slider-label" for="wi-loan">Loan Amount (₹)</label>
+        <input type="range" id="wi-loan" class="wi-slider" min="10000" max="100000" step="5000">
+        <span class="wi-slider-value" id="wi-loan-val">—</span>
+      </div>
+      <div class="wi-presets">
+        <button class="preset-chip" data-preset="loan-down">-20%</button>
+      </div>
+    </div>
+
+    <button id="wi-run" class="btn btn-primary btn-lg">RECALCULATE</button>
+    <div id="wi-errors" class="form-errors"></div>
+  </aside>
+
+  <section class="wi-result">
+    <div id="wi-loading" class="wi-loading hidden">
+      <div class="spinner"></div>
+      <p>Running scenario through the ML pipeline…</p>
+    </div>
+
+    <div id="wi-result-body" class="hidden">
+      <div class="wi-gauge-row">
+        <div class="gauge-card" id="wi-gauge-before">
+          <div class="gauge-label">BEFORE</div>
+          <svg viewBox="0 0 200 120" class="gauge">
+            <path class="gauge-track" d="M 20 110 A 80 80 0 0 1 180 110"></path>
+            <path class="gauge-fill" id="geo-fill-before" d="M 20 110 A 80 80 0 0 1 180 110"></path>
+          </svg>
+          <div class="gauge-center">
+            <div class="gauge-score" id="wi-score-before">—</div>
+            <div class="gauge-risk-label" id="wi-cat-before">—</div>
+          </div>
+        </div>
+        <div class="gauge-arrow"><span class="material-symbols-outlined">arrow_right_alt</span></div>
+        <div class="gauge-card" id="wi-gauge-after">
+          <div class="gauge-label">AFTER (Hypothetical)</div>
+          <svg viewBox="0 0 200 120" class="gauge">
+            <path class="gauge-track" d="M 20 110 A 80 80 0 0 1 180 110"></path>
+            <path class="gauge-fill" id="geo-fill-after" d="M 20 110 A 80 80 0 0 1 180 110"></path>
+          </svg>
+          <div class="gauge-center">
+            <div class="gauge-score" id="wi-score-after">—</div>
+            <div class="gauge-risk-label" id="wi-cat-after">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="wi-summary panel">
+        <h3>Score Change</h3>
+        <div class="wi-change-line">
+          <span class="wi-change-big" id="wi-score-delta">—</span>
+          <span class="wi-change-desc" id="wi-cat-change">—</span>
+        </div>
+        <div class="wi-prob-line">
+          <span>Probability of default:</span>
+          <span id="wi-prob-before">—</span>
+          <span class="material-symbols-outlined">arrow_forward</span>
+          <span id="wi-prob-after">—</span>
+        </div>
+        <div class="wi-prob-line">
+          <span>Anomaly:</span>
+          <span id="wi-anomaly-before">—</span>
+          <span class="material-symbols-outlined">arrow_forward</span>
+          <span id="wi-anomaly-after">—</span>
+        </div>
+      </div>
+
+      <div class="wi-detail-grid">
+        <div class="panel wi-compare">
+          <h3>Feature Impact</h3>
+          <table class="data-table wi-table">
+            <thead><tr><th>Field</th><th>Before</th><th>After</th></tr></thead>
+            <tbody id="wi-changed-fields"></tbody>
+          </table>
+          <p class="muted small" id="wi-no-changes" hidden>No fields changed yet.</p>
+        </div>
+
+        <div class="panel wi-explanation">
+          <h3>What the Model Saw</h3>
+          <div class="wi-exp-block">
+            <h4 class="wi-exp-title">Before &mdash; Key Drivers</h4>
+            <ul id="wi-exp-before" class="wi-exp-list"></ul>
+          </div>
+          <div class="wi-exp-block">
+            <h4 class="wi-exp-title">After &mdash; Key Drivers</h4>
+            <ul id="wi-exp-after" class="wi-exp-list"></ul>
+          </div>
+          <p class="muted small">{{ disclaimer }}</p>
+        </div>
+      </div>
+
+      <div class="wi-history panel">
+        <div class="wi-history-head">
+          <h3>Scenario History</h3>
+          <button class="btn btn-sm" id="wi-clear-history">Clear</button>
+        </div>
+        <div id="wi-history-list" class="wi-history-list"></div>
+      </div>
+    </div>
+  </section>
+</div>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+<script id="field-spec" type="application/json">{{ fields | tojson }}</script>
+<script src="{{ url_for('static', filename='js/scenario.js') }}"></script>
+{% endblock %}

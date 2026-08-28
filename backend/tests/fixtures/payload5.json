@@ -1,0 +1,21 @@
+﻿{
+    "existing_credits":  2,
+    "property_magnitude":  "no known property",
+    "installment_commitment":  4,
+    "savings_status":  "100-1000",
+    "age":  35,
+    "credit_amount":  10000,
+    "residence_since":  4,
+    "job":  "skilled",
+    "other_parties":  "none",
+    "other_payment_plans":  "bank",
+    "personal_status":  "male single",
+    "credit_history":  "critical/other existing credit",
+    "housing":  "own",
+    "employment":  "4-7",
+    "own_telephone":  "none",
+    "num_dependents":  1,
+    "foreign_worker":  "yes",
+    "checking_status":  "0-200",
+    "purpose":  "radio/tv"
+}

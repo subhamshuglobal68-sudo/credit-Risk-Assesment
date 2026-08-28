@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Review Center — CreditGuard AI{% endblock %}
+{% block breadcrumb %}Review Center{% endblock %}
+{% block content %}
+<header class="page-header rc-header-row">
+  <div>
+    <h1>Anomaly &amp; Manual Review Center</h1>
+    <p class="muted">Applications flagged by the model for human review. Risk measures probability of default; <strong>anomaly</strong> measures how unusual the profile is vs the reference population (not fraud).</p>
+  </div>
+  <button class="btn" id="rc-seed">Scan &amp; seed reviews</button>
+</header>
+
+{% if error %}
+<div class="alert alert-warning"><strong>Model not ready:</strong> {{ error }}</div>
+{% endif %}
+
+<div class="rc-kpis">
+  <div class="rc-kpi"><div class="rc-kpi-value" id="kpi-total">—</div><div class="rc-kpi-label">Total Flagged</div></div>
+  <div class="rc-kpi"><div class="rc-kpi-value" id="kpi-open">—</div><div class="rc-kpi-label">Open</div></div>
+  <div class="rc-kpi"><div class="rc-kpi-value" id="kpi-inreview">—</div><div class="rc-kpi-label">In Review</div></div>
+  <div class="rc-kpi high"><div class="rc-kpi-value" id="kpi-high">—</div><div class="rc-kpi-label">High Priority</div></div>
+  <div class="rc-kpi"><div class="rc-kpi-value" id="kpi-anom">—</div><div class="rc-kpi-label">Anomalous Pending</div></div>
+</div>
+
+<section class="panel">
+  <div class="rc-toolbar">
+    <select id="rc-status" aria-label="Filter by status">
+      <option value="">All statuses</option>
+      <option value="OPEN">Open</option>
+      <option value="IN_REVIEW">In Review</option>
+      <option value="VERIFICATION_REQUIRED">Verification Required</option>
+      <option value="ESCALATED">Escalated</option>
+      <option value="RESOLVED">Resolved</option>
+    </select>
+    <select id="rc-priority" aria-label="Filter by priority">
+      <option value="">All priorities</option>
+      <option value="HIGH">High</option>
+      <option value="MEDIUM">Medium</option>
+      <option value="LOW">Low</option>
+    </select>
+    <select id="rc-risk" aria-label="Filter by risk category">
+      <option value="">All risk</option>
+      <option value="Low">Low</option>
+      <option value="Medium">Medium</option>
+      <option value="High">High</option>
+    </select>
+    <select id="rc-anomalous" aria-label="Filter by anomaly">
+      <option value="">Anomaly: Any</option>
+      <option value="true">Anomalous only</option>
+      <option value="false">Normal only</option>
+    </select>
+    <input type="text" id="rc-search" class="rc-search" placeholder="Search request ID or job…" aria-label="Search">
+  </div>
+
+  <div class="table-scroll">
+    <table class="data-table rc-table">
+      <thead>
+        <tr><th>ID</th><th>Risk</th><th>AoD</th><th>Anomaly</th><th>Priority</th><th>Status</th><th>Created</th><th></th></tr>
+      </thead>
+      <tbody id="rc-queue"></tbody>
+    </table>
+  </div>
+  <div id="rc-empty" class="rc-empty hidden">No applications match the current filters.</div>
+  <p class="muted small">{{ disclaimer }}</p>
+</section>
+
+<!-- Risk vs Anomaly matrix -->
+<section class="panel">
+  <h2>Risk vs Anomaly Matrix</h2>
+  <p class="muted">Each flagged application plotted by risk probability (x) against anomaly score (y). Click a point to investigate.</p>
+  <div class="rc-matrix-wrap">
+    <div class="rc-matrix-legend">
+      <span><i class="dot dot-red"></i> High priority</span>
+      <span><i class="dot dot-amber"></i> Medium priority</span>
+      <span><i class="dot dot-green"></i> Low priority</span>
+    </div>
+    <canvas id="rc-matrix" width="800" height="360"></canvas>
+  </div>
+</section>
+
+<!-- Investigation drawer -->
+<div class="rc-overlay" id="rc-overlay"></div>
+<aside class="rc-drawer" id="rc-drawer" role="dialog" aria-modal="true" aria-label="Application investigation">
+  <div class="rc-drawer-head">
+    <h2>Application <span class="mono" id="rc-detail-id">#—</span></h2>
+    <button class="rc-close" id="rc-close" aria-label="Close">×</button>
+  </div>
+  <div class="rc-drawer-body" id="rc-detail-body"></div>
+</aside>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/review.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,3 @@
+# Frontend server — proxies to backend API, renders templates.
+flask>=3.0,<4.0
+requests>=2.31.0
