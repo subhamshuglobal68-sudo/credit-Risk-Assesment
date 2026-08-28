@@ -52,16 +52,17 @@ def login():
     error = None
     if request.method == "POST":
         email = request.form.get("email")
-        if not email:
-            error = "Email address is required"
-        elif "@" not in email or "." not in email:
-            error = "Invalid email format"
+        password = request.form.get("password")
+        
+        if not email or not password:
+            error = "Email and password are required"
         else:
-            resp = proxy_to_backend("/api/auth/send-otp", {"email": email}, method="POST")
+            resp = proxy_to_backend("/api/auth/login", {"email": email, "password": password}, method="POST")
             if "error" in resp:
                 error = resp["error"]
             else:
-                return redirect(url_for("verify_otp", email=email, action="login"))
+                session["user"] = resp["user"]
+                return redirect(url_for("index"))
     return render_template("login.html", error=error)
 
 @app.route("/register", methods=["GET", "POST"])
@@ -72,17 +73,22 @@ def register():
     if request.method == "POST":
         name = request.form.get("name")
         email = request.form.get("email")
+        password = request.form.get("password")
         
-        if not name or not email:
-            error = "All fields are required"
+        if not email or not password:
+            error = "Email and password are required"
         elif "@" not in email or "." not in email:
             error = "Invalid email format"
         else:
-            resp = proxy_to_backend("/api/auth/send-otp", {"email": email}, method="POST")
+            resp = proxy_to_backend("/api/auth/register", {"email": email, "password": password, "name": name}, method="POST")
             if "error" in resp:
                 error = resp["error"]
             else:
-                return redirect(url_for("verify_otp", email=email, action="register", name=name))
+                login_resp = proxy_to_backend("/api/auth/login", {"email": email, "password": password}, method="POST")
+                if "error" not in login_resp:
+                    session["user"] = login_resp["user"]
+                    return redirect(url_for("index"))
+                return redirect(url_for("login"))
     return render_template("register.html", error=error)
 
 @app.route("/verify-otp", methods=["GET", "POST"])
