@@ -81,6 +81,32 @@
     outline: none;
     border-color: var(--accent);
   }
+  
+  /* Password toggle styles */
+  .password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .password-wrapper input {
+    padding-right: 40px !important;
+  }
+  .password-toggle-btn {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .password-toggle-btn:hover {
+    color: var(--text);
+  }
+
   .auth-btn {
     width: 100%;
     margin-top: 10px;
@@ -110,30 +136,52 @@
     </div>
     <h2 class="auth-title">Welcome back</h2>
     
-    {% if error %}
-    <div class="alert alert-warning" style="margin-bottom: 20px; font-size: 13px; border-radius: 2px; padding: 12px 16px; display: flex; align-items: center; gap: 8px;">
-      <span class="material-symbols-outlined" style="color: var(--warn); font-size: 18px;">warning</span>
-      <span>{{ error }}</span>
-    </div>
-    {% endif %}
-    
     <form method="POST" action="{{ url_for('login') }}">
       <div class="auth-field">
         <label for="email">Email Address</label>
         <input type="email" id="email" name="email" required placeholder="name@company.com" autocomplete="email">
       </div>
       <div class="auth-field">
-        <label for="password">Password</label>
-        <input type="password" id="password" name="password" required placeholder="••••••••" autocomplete="current-password">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <label for="password" style="margin-bottom: 0;">Password</label>
+          <a href="#" style="font-size: 11px; color: var(--accent); text-decoration: none; font-weight: 600; text-transform: uppercase; letter-spacing: .05em;" onclick="alert('Forgot password placeholder')">Forgot password?</a>
+        </div>
+        <div class="password-wrapper">
+          <input type="password" id="password" name="password" required placeholder="••••••••" autocomplete="current-password">
+          <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('password', this)" aria-label="Toggle password visibility">
+            <span class="material-symbols-outlined">visibility</span>
+          </button>
+        </div>
       </div>
       <button type="submit" class="btn btn-primary auth-btn">Sign In</button>
     </form>
+    
+    {% if error %}
+    <div class="alert alert-warning" style="margin-top: 20px; margin-bottom: 0; font-size: 13px; border-radius: 2px; padding: 12px 16px; display: flex; align-items: center; gap: 8px;">
+      <span class="material-symbols-outlined" style="color: var(--warn); font-size: 18px;">warning</span>
+      <span>{{ error }}</span>
+    </div>
+    {% endif %}
     
     <div class="auth-footer">
       Don't have an account? <a href="{{ url_for('register') }}">Create an account</a>
     </div>
   </div>
 </div>
+
+<script>
+function togglePasswordVisibility(fieldId, btn) {
+  const input = document.getElementById(fieldId);
+  const icon = btn.querySelector('.material-symbols-outlined');
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.textContent = 'visibility_off';
+  } else {
+    input.type = 'password';
+    icon.textContent = 'visibility';
+  }
+}
+</script>
 <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>

@@ -81,6 +81,32 @@
     outline: none;
     border-color: var(--accent);
   }
+  
+  /* Password toggle styles */
+  .password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .password-wrapper input {
+    padding-right: 40px !important;
+  }
+  .password-toggle-btn {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .password-toggle-btn:hover {
+    color: var(--text);
+  }
+
   .auth-btn {
     width: 100%;
     margin-top: 10px;
@@ -110,28 +136,49 @@
     </div>
     <h2 class="auth-title">Create your account</h2>
     
-    {% if error %}
-    <div class="alert alert-warning" style="margin-bottom: 20px; font-size: 13px; border-radius: 2px; padding: 12px 16px; display: flex; align-items: center; gap: 8px;">
-      <span class="material-symbols-outlined" style="color: var(--warn); font-size: 18px;">warning</span>
-      <span>{{ error }}</span>
-    </div>
-    {% endif %}
-    
     <form method="POST" action="{{ url_for('register') }}" onsubmit="return validateForm()">
+      <div class="auth-field">
+        <label for="name">Full Name</label>
+        <input type="text" id="name" name="name" placeholder="John Doe" autocomplete="name">
+      </div>
       <div class="auth-field">
         <label for="email">Email Address</label>
         <input type="email" id="email" name="email" required placeholder="name@company.com" autocomplete="email">
       </div>
       <div class="auth-field">
         <label for="password">Password</label>
-        <input type="password" id="password" name="password" required placeholder="Min. 6 characters" autocomplete="new-password">
+        <div class="password-wrapper">
+          <input type="password" id="password" name="password" required placeholder="Min. 6 characters" autocomplete="new-password">
+          <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('password', this)" aria-label="Toggle password visibility">
+            <span class="material-symbols-outlined">visibility</span>
+          </button>
+        </div>
       </div>
       <div class="auth-field">
         <label for="confirm_password">Confirm Password</label>
-        <input type="password" id="confirm_password" name="confirm_password" required placeholder="••••••••" autocomplete="new-password">
+        <div class="password-wrapper">
+          <input type="password" id="confirm_password" name="confirm_password" required placeholder="••••••••" autocomplete="new-password">
+          <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('confirm_password', this)" aria-label="Toggle password visibility">
+            <span class="material-symbols-outlined">visibility</span>
+          </button>
+        </div>
       </div>
       <button type="submit" class="btn btn-primary auth-btn">Create Account</button>
     </form>
+    
+    <!-- Client-side error display banner -->
+    <div id="client-error" class="alert alert-warning" style="display: none; margin-top: 20px; font-size: 13px; border-radius: 2px; padding: 12px 16px; align-items: center; gap: 8px;">
+      <span class="material-symbols-outlined" style="color: var(--warn); font-size: 18px;">warning</span>
+      <span id="client-error-text"></span>
+    </div>
+
+    <!-- Server-side error display banner -->
+    {% if error %}
+    <div class="alert alert-warning" style="margin-top: 20px; margin-bottom: 0; font-size: 13px; border-radius: 2px; padding: 12px 16px; display: flex; align-items: center; gap: 8px;">
+      <span class="material-symbols-outlined" style="color: var(--warn); font-size: 18px;">warning</span>
+      <span>{{ error }}</span>
+    </div>
+    {% endif %}
     
     <div class="auth-footer">
       Already have an account? <a href="{{ url_for('login') }}">Sign in instead</a>
@@ -140,28 +187,51 @@
 </div>
 
 <script>
+function togglePasswordVisibility(fieldId, btn) {
+  const input = document.getElementById(fieldId);
+  const icon = btn.querySelector('.material-symbols-outlined');
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.textContent = 'visibility_off';
+  } else {
+    input.type = 'password';
+    icon.textContent = 'visibility';
+  }
+}
+
 function validateForm() {
-  const email = document.getElementById('email').value;
+  const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
   const confirmPassword = document.getElementById('confirm_password').value;
   
+  // Hide error container
+  const errorDiv = document.getElementById('client-error');
+  errorDiv.style.display = 'none';
+  
   if (!email || !password || !confirmPassword) {
-    alert("All fields are required");
+    showError("All fields are required");
     return false;
   }
   if (password !== confirmPassword) {
-    alert("Passwords do not match");
+    showError("Passwords do not match");
     return false;
   }
   if (password.length < 6) {
-    alert("Password must be at least 6 characters long");
+    showError("Password must be at least 6 characters long");
     return false;
   }
   if (!email.includes('@') || !email.includes('.')) {
-    alert("Please enter a valid email address");
+    showError("Please enter a valid email address");
     return false;
   }
   return true;
+}
+
+function showError(msg) {
+  const errorDiv = document.getElementById('client-error');
+  const errorText = document.getElementById('client-error-text');
+  errorText.textContent = msg;
+  errorDiv.style.display = 'flex';
 }
 </script>
 <script src="{{ url_for('static', filename='js/app.js') }}"></script>
