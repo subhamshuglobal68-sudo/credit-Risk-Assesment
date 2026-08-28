@@ -299,9 +299,9 @@ html.dark .wi-change-big {
 html.dark .brand-title {
   color: var(--accent) !important;
 }
+html.dark .brand-icon,
 html.dark .brand-mark {
-  background: var(--accent) !important;
-  color: #12141a !important;
+  background: none !important;
 }
 
 /* Body / descriptions stay lighter weight, normal case, and muted color */
