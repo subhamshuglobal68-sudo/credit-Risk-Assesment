@@ -228,7 +228,7 @@
 <body>
 <div class="auth-card">
   <div class="badge-icon">
-    <span class="material-symbols-outlined">person_add</span>
+    <span style="font-size: 24px; color: #fbbf24;">⚡</span>
   </div>
   <div class="auth-header">
     <h2 class="auth-title">Create an account</h2>
@@ -251,11 +251,11 @@
   <form class="auth-form" method="POST" action="{{ url_for('register') }}" onsubmit="return validateForm()">
     <div class="auth-field">
       <label for="name">Full Name</label>
-      <input type="text" id="name" name="name" required placeholder="John Doe" autocomplete="name">
+      <input type="text" id="name" name="name" required placeholder="Enter your full name" autocomplete="name">
     </div>
     <div class="auth-field">
       <label for="email">Email Address</label>
-      <input type="email" id="email" name="email" required placeholder="name@company.com" autocomplete="email">
+      <input type="email" id="email" name="email" required placeholder="Enter your Email" autocomplete="email">
     </div>
     <button type="submit" class="btn btn-primary">Send email code</button>
   </form>

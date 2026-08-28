@@ -192,7 +192,7 @@
 <body>
 <div class="auth-card">
   <div class="badge-icon">
-    <span class="material-symbols-outlined">mark_email_unread</span>
+    <span style="font-size: 24px; color: #fbbf24;">⚡</span>
   </div>
   <div class="auth-header">
     <h2 class="auth-title">Check your email</h2>
@@ -237,6 +237,10 @@
   
   <p class="resend-text">
     Didn't receive the code? <a id="resend-btn" onclick="resendCode()">Resend code</a>
+  </p>
+  
+  <p style="margin-top: 14px; font-size: 12px; text-align: center; color: var(--text-secondary);">
+    💡 <a href="{{ url_for('email_preview', email=email) }}" target="_blank" style="color: #0b57d0; text-decoration: none; font-weight: 500;">[Demo] View simulated verification email in browser</a>
   </p>
 </div>
 

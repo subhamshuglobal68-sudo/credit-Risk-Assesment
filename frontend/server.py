@@ -35,6 +35,7 @@ def check_auth():
         "resend_otp",
         "google_auth",
         "google_auth_callback",
+        "email_preview",
         "static"
     ]
     if request.endpoint in allowed_endpoints:
@@ -140,6 +141,15 @@ def google_auth_callback():
         
     session["user"] = resp["user"]
     return redirect(url_for("index"))
+
+@app.route("/email-preview")
+def email_preview():
+    email = request.args.get("email")
+    if not email:
+        return redirect(url_for("login"))
+    resp = proxy_to_backend(f"/api/auth/get-otp?email={email}", method="GET")
+    code = resp.get("code", "------")
+    return render_template("email_preview.html", email=email, code=code)
 
 @app.route("/logout")
 def logout():

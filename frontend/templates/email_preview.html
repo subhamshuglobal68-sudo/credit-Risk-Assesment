@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Email Preview - CREA AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0" rel="stylesheet">
+<style>
+  :root {
+    --bg-light: #f3f4f6;
+    --card-bg: #ffffff;
+    --text-primary: #1f2937;
+    --text-secondary: #4b5563;
+    --text-muted: #6b7280;
+    --border-color: #e5e7eb;
+    --btn-primary: #111827;
+    --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+    --radius: 12px;
+  }
+  
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  
+  body {
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg-light);
+    color: var(--text-primary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 24px;
+  }
+  
+  .email-card {
+    width: 100%;
+    max-width: 500px;
+    background-color: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 40px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
+  }
+  
+  .badge-icon {
+    width: 48px;
+    height: 48px;
+    background-color: var(--bg-light);
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    margin-bottom: 24px;
+  }
+  
+  .badge-icon span {
+    font-size: 24px;
+  }
+  
+  .email-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+  }
+  
+  .email-sub {
+    font-size: 15px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 24px;
+  }
+  
+  .code-container {
+    background-color: #f3f4f6;
+    border-radius: 8px;
+    padding: 16px 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  
+  .otp-code {
+    font-family: "JetBrains Mono", monospace, Courier, sans-serif;
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    color: var(--text-primary);
+  }
+  
+  .copy-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    padding: 6px;
+    border-radius: 4px;
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+  
+  .copy-btn:hover {
+    background-color: #e5e7eb;
+    color: var(--text-primary);
+  }
+  
+  .copy-btn .material-symbols-outlined {
+    font-size: 22px;
+  }
+  
+  .info-text {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin-bottom: 16px;
+  }
+  
+  .security-note {
+    font-size: 12px;
+    color: #9ca3af;
+    line-height: 1.5;
+    border-top: 1px solid var(--border-color);
+    padding-top: 16px;
+    margin-top: 16px;
+  }
+  
+  .success-toast {
+    font-size: 12px;
+    color: #15803d;
+    background-color: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: none;
+    animation: fadeIn 0.2s ease;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+</style>
+</head>
+<body>
+<div class="email-card">
+  <div class="badge-icon">
+    <span style="color: #fbbf24;">⚡</span>
+  </div>
+  
+  <h2 class="email-title">Sign in to app</h2>
+  <p class="email-sub">You requested to sign in to <strong>CREA AI</strong>. Your one-time code is:</p>
+  
+  <!-- Code Area -->
+  <div class="code-container">
+    <span class="otp-code" id="otp-code-val">{{ code }}</span>
+    <button class="copy-btn" id="copy-btn" onclick="copyCode()" title="Copy to clipboard">
+      <span class="material-symbols-outlined">content_copy</span>
+    </button>
+    <span class="success-toast" id="success-toast">Copied!</span>
+  </div>
+  
+  <p class="info-text"><strong>This code expires in 10 minutes.</strong></p>
+  
+  <p class="security-note">
+    If you didn't request to sign in to <strong>CREA AI</strong>, you can safely ignore this email. Someone else might have typed your email address by mistake.
+  </p>
+</div>
+
+<script>
+function copyCode() {
+  const codeText = document.getElementById('otp-code-val').textContent;
+  navigator.clipboard.writeText(codeText).then(() => {
+    const toast = document.getElementById('success-toast');
+    const copyIcon = document.getElementById('copy-btn');
+    
+    toast.style.display = 'inline-block';
+    copyIcon.style.display = 'none';
+    
+    setTimeout(() => {
+      toast.style.display = 'none';
+      copyIcon.style.display = 'flex';
+    }, 2000);
+  });
+}
+</script>
+</body>
+</html>

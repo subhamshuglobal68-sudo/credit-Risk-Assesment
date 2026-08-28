@@ -114,3 +114,19 @@ def google_login():
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": f"Database error: {str(e)}"}), 500
+
+@auth_bp.route("/get-otp", methods=["GET"])
+def get_otp():
+    email = request.args.get("email")
+    if not email:
+        return jsonify({"error": "Email is required"}), 400
+        
+    otp_entry = OTPCode.query.filter_by(email=email).order_by(OTPCode.created_at.desc()).first()
+    if not otp_entry:
+        return jsonify({"error": "No active verification code found for this email"}), 404
+        
+    return jsonify({
+        "email": otp_entry.email,
+        "code": otp_entry.code,
+        "expires_at": otp_entry.expires_at.isoformat()
+    }), 200
