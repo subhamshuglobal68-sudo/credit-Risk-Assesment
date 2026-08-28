@@ -9,17 +9,17 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0" rel="stylesheet">
 <style>
   :root {
-    --bg-light: #f3f4f6;
+    --bg-light: #f8f9fa;
     --card-bg: #ffffff;
-    --text-primary: #1f2937;
-    --text-secondary: #4b5563;
-    --text-muted: #9ca3af;
+    --text-primary: #111111;
+    --text-secondary: #4a4a4a;
+    --text-muted: #8c8c8c;
     --border-color: #e5e7eb;
     --focus-ring: #111827;
-    --btn-primary: #111827;
-    --btn-primary-hover: #1f2937;
-    --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
-    --radius: 12px;
+    --btn-primary: #1f2026;
+    --btn-primary-hover: #111111;
+    --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.03), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
+    --radius: 16px;
   }
   
   * {
@@ -41,28 +41,28 @@
   
   .auth-card {
     width: 100%;
-    max-width: 420px;
+    max-width: 440px;
     background-color: var(--card-bg);
     border-radius: var(--radius);
-    padding: 40px 32px;
+    padding: 40px;
     box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
     align-items: center;
   }
   
   .badge-icon {
-    width: 48px;
-    height: 48px;
-    background-color: var(--bg-light);
-    color: var(--btn-primary);
+    width: 56px;
+    height: 56px;
+    background-color: #f3f4f6;
     border-radius: 50%;
     display: grid;
     place-items: center;
     margin-bottom: 24px;
   }
   
-  .badge-icon .material-symbols-outlined {
+  .badge-icon span {
     font-size: 24px;
   }
   
@@ -77,6 +77,7 @@
     font-weight: 700;
     color: var(--text-primary);
     margin-bottom: 8px;
+    letter-spacing: -0.5px;
   }
   
   .auth-sub {
@@ -126,7 +127,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 10px;
     transition: all 0.15s ease;
   }
   
@@ -192,7 +193,7 @@
 <body>
 <div class="auth-card">
   <div class="badge-icon">
-    <span style="font-size: 24px; color: #fbbf24;">⚡</span>
+    <span style="color: #fbbf24;">⚡</span>
   </div>
   <div class="auth-header">
     <h2 class="auth-title">Check your email</h2>
