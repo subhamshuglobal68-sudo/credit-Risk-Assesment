@@ -108,7 +108,12 @@ LOSS_GIVEN_DEFAULT = 0.45
 
 
 def proxy_to_backend(endpoint: str, payload: Dict[str, Any] = None, method: str = "POST", timeout: int = 10) -> Dict[str, Any]:
-    """Send request to backend and return parsed JSON."""
+    """Send request to backend and return parsed JSON.
+
+    Non-2xx responses (e.g. 400 duplicate email, 401 bad credentials) are
+    returned as-is so callers can surface the backend's ``error`` message
+    instead of masking it as a generic "Backend unavailable" failure.
+    """
     url = f"{BACKEND_URL}{endpoint}"
     try:
         if method == "GET":
@@ -117,10 +122,16 @@ def proxy_to_backend(endpoint: str, payload: Dict[str, Any] = None, method: str 
             resp = requests.patch(url, json=payload, timeout=timeout)
         else:
             resp = requests.post(url, json=payload, timeout=timeout)
-        resp.raise_for_status()
-        return resp.json()
     except requests.exceptions.RequestException as e:
         return {"error": f"Backend unavailable: {e}"}
+
+    try:
+        data = resp.json()
+    except ValueError:
+        data = {}
+    if resp.status_code >= 400:
+        return data if "error" in data else {"error": f"Request failed (HTTP {resp.status_code})"}
+    return data
 
 
 @app.route("/")
