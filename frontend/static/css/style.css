@@ -208,44 +208,230 @@ body {
   --dur-slow: 350ms;
 }
 
-/* Dark mode palette */
+/* =====================================================================
+   DARK MODE OVERRIDES (Private Banking Terminal Aesthetic)
+   ===================================================================== */
 html.dark {
-  --bg: #0B0E14;
-  --panel: #131B2E;
-  --panel-2: #1C2538;
-  --border: #2A3548;
-  --text: #E8EDF5;
-  --muted: #8892A4;
-  --accent: #3B6DF2;
-  --accent-2: #5B8AF4;
-  --accent-glow: rgba(59, 109, 242, .25);
-  --good: #4EDCAB;
-  --warn: #FFC46B;
-  --bad: #FF7A7A;
+  /* Page background: near-black charcoal-navy */
+  --bg: #12141a;
+  
+  /* Card/panel background: slightly lighter charcoal */
+  --panel: #1a1d26;
+  --panel-2: #222630;
+  
+  /* 1px hairline border in a subtle warm-gray */
+  --border: #2a2d38;
+  
+  /* Text hierarchy: off-white primary, warm gray muted secondary */
+  --text: #e8e4d8;
+  --muted: #8a8a82;
+  
+  /* Accent color — champagne/gold */
+  --accent: #c9a876;
+  --accent-2: #e8c896;
+  --accent-glow: rgba(201, 168, 118, 0.15);
+  
+  /* Status/semantic colors: soft teal, muted gold, soft rose-coral */
+  --good: #5dcaa5;
+  --warn: #c9a876;
+  --bad: #d4638a;
+  
+  /* Rounded corners */
+  --radius: 12px;
+}
+
+/* Typography Overrides (Excluding Icons) */
+html.dark body,
+html.dark input,
+html.dark select,
+html.dark button,
+html.dark textarea,
+html.dark table,
+html.dark th,
+html.dark td,
+html.dark h1,
+html.dark h2,
+html.dark h3,
+html.dark h4,
+html.dark h5,
+html.dark h6,
+html.dark p,
+html.dark a,
+html.dark span:not(.material-symbols-outlined),
+html.dark strong,
+html.dark label {
+  font-family: "JetBrains Mono", "Courier New", Courier, monospace !important;
+}
+
+/* Section labels, nav items, table headers in uppercase + letter-spacing */
+html.dark label,
+html.dark .nav-link,
+html.dark th,
+html.dark .stat-label,
+html.dark .widget-sub,
+html.dark .panel h2,
+html.dark .chart-title,
+html.dark .wi-section-title,
+html.dark .gauge-label,
+html.dark .rc-kpi-label {
+  text-transform: uppercase !important;
+  letter-spacing: 0.8px !important;
+  font-weight: 500 !important;
+}
+
+/* Heavier weight for large stat numbers and headings */
+html.dark h1,
+html.dark h2,
+html.dark h3,
+html.dark .stat-value,
+html.dark .result-value,
+html.dark .health-value,
+html.dark .widget-num,
+html.dark .brand-title,
+html.dark .gauge-score,
+html.dark .rc-kpi-value,
+html.dark .wi-change-big {
+  font-weight: 700 !important;
+  color: var(--text) !important;
+}
+
+/* Accent logo */
+html.dark .brand-title {
+  color: var(--accent) !important;
+}
+html.dark .brand-mark {
+  background: var(--accent) !important;
+  color: #12141a !important;
+}
+
+/* Body / descriptions stay lighter weight, normal case, and muted color */
+html.dark p,
+html.dark .muted,
+html.dark .stat-sub,
+html.dark .widget-desc,
+html.dark .wi-change-desc {
+  font-weight: 400 !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  color: var(--muted) !important;
+}
+
+/* Sidebar and active nav item highlight */
+html.dark .sidebar {
+  background: #1a1d26 !important;
+}
+html.dark .nav-link.active {
+  color: var(--accent) !important;
+  background: rgba(201, 168, 118, 0.12) !important;
+}
+html.dark .nav-link:hover {
+  background: var(--panel-2) !important;
+  color: var(--text) !important;
+}
+
+/* Flat design for cards (no gradients, no drop shadows) */
+html.dark .stat-card,
+html.dark .panel,
+html.dark .chart-panel,
+html.dark .card-neon,
+html.dark .wi-banner,
+html.dark .gauge-card,
+html.dark .rc-kpi,
+html.dark .auth-card {
+  box-shadow: none !important;
+  border: 1px solid var(--border) !important;
+  background: var(--panel) !important;
+  border-radius: var(--radius) !important;
+}
+html.dark .card-neon:hover,
+html.dark .chart-panel:hover {
+  border-color: var(--accent) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* Primary Button Solid Gold styling */
+html.dark .btn-primary,
+html.dark .auth-btn,
+html.dark .wi-presets .preset-chip:hover {
+  background: var(--accent) !important;
+  color: #12141a !important;
+  border-color: var(--accent) !important;
+  font-weight: 600 !important;
+}
+html.dark .btn-primary:hover,
+html.dark .auth-btn:hover {
+  background: var(--accent-2) !important;
+  color: #12141a !important;
+  border-color: var(--accent-2) !important;
+}
+
+/* Charts aesthetic matching card surface, gold accent, thin gridlines */
+html.dark .score-chart {
+  background: var(--panel) !important;
+  border-color: var(--border) !important;
+}
+html.dark .score-chart span {
+  background: var(--accent) !important;
+  border-color: var(--accent-2) !important;
 }
 html.dark .score-chart span:nth-child(-n+3),
 html.dark .score-chart span:nth-child(7),
-html.dark .score-chart span:nth-child(8) { background: #3A4558; border-color: #4A5568; }
-html.dark .health-meter { background: #2A3548; }
-html.dark .health-meter span { background: var(--good); }
-html.dark .health-meter .warning-meter { background: linear-gradient(90deg, var(--good) 80%, var(--warn) 80%); }
-html.dark .highlight-row { background: rgba(59, 109, 242, .12); }
-html.dark .alert { background: rgba(255, 196, 107, .1); }
-html.dark .badge { background: rgba(59, 109, 242, .12); }
-html.dark .sidebar-active { background: rgba(59, 109, 242, .12); }
-html.dark .card-neon { background: #131B2E; border-color: #3A4558; }
-html.dark .card-neon:hover { border-color: #5A6578; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3); }
-html.dark .chart-panel { background: #131B2E; border-color: #3A4558; }
-html.dark .chart-panel:hover { border-color: #5A6578; }
-html.dark .stat-card:not(.card-neon) { background: var(--panel); }
-html.dark .btn-neon-grey { background: #3A4558; color: #E8EDF5; }
-html.dark .btn-neon-grey:hover { background: #4A5568; }
-html.dark .bar { background: #3A4558; }
-html.dark .bar.blue { background: var(--accent); }
-html.dark .pie circle { stroke-width: 12; }
-html.dark .pie-center .pie-total { color: #E8EDF5; }
-html.dark .pie-center .pie-label { color: #8892A4; }
-html.dark .legend { color: #8892A4; }
+html.dark .score-chart span:nth-child(8) {
+  background: rgba(138, 138, 130, 0.2) !important;
+  border-color: rgba(138, 138, 130, 0.3) !important;
+}
+html.dark .chart-axis {
+  border-color: var(--border) !important;
+  color: var(--muted) !important;
+}
+
+/* Health Meter styling */
+html.dark .health-meter {
+  background: rgba(138, 138, 130, 0.15) !important;
+}
+html.dark .health-meter span {
+  background: var(--good) !important;
+}
+html.dark .health-meter .warning-meter {
+  background: linear-gradient(90deg, var(--good) 80%, var(--warn) 80%) !important;
+}
+
+/* Highlight rows and table details */
+html.dark .highlight-row {
+  background: rgba(201, 168, 118, 0.1) !important;
+}
+html.dark .alert {
+  background: rgba(201, 168, 118, 0.08) !important;
+  border-color: var(--border) !important;
+}
+html.dark .badge {
+  background: rgba(201, 168, 118, 0.12) !important;
+  color: var(--accent) !important;
+}
+html.dark .btn-neon-grey {
+  background: var(--panel-2) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+}
+html.dark .btn-neon-grey:hover {
+  background: var(--border) !important;
+}
+html.dark .bar {
+  background: var(--panel-2) !important;
+}
+html.dark .bar.blue {
+  background: var(--accent) !important;
+}
+html.dark .pie-center .pie-total {
+  color: var(--text) !important;
+}
+html.dark .pie-center .pie-label {
+  color: var(--muted) !important;
+}
+html.dark .legend {
+  color: var(--muted) !important;
+}
 
 html, body { background: var(--bg); color: var(--text); transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease); }
 body { font-family: "Inter", sans-serif; font-size: 14px; line-height: 20px; }
