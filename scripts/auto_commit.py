@@ -17,6 +17,9 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 POLL_INTERVAL_SECONDS = 3
 DEBOUNCE_WAIT_SECONDS = 3
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(line_buffering=True)
+
 
 def run_cmd(cmd, cwd=REPO_ROOT):
     try:
