@@ -62,6 +62,7 @@ function initSliders() {
       const label = document.getElementById(s.id + '-val');
       if (label) label.textContent = s.fmt(v);
       WI.current[s.key] = v;
+      scheduleRecalc(); // Enable live updates as slider is dragged
     });
     el.addEventListener('change', () => scheduleRecalc());
   });

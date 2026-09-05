@@ -55,12 +55,7 @@
   .brand-logo .logo-icon {
     width: 36px;
     height: 36px;
-    background: var(--text);
-    border-radius: 50%;
-    display: grid;
-    place-items: center;
-    color: #fff;
-    font-size: 18px;
+    object-fit: contain;
   }
 
   .brand-logo .logo-name {
@@ -235,7 +230,7 @@
 
 <div class="topbar">
   <a href="/" class="brand-logo">
-    <div class="logo-icon">⚡</div>
+    <img src="{{ url_for('static', filename='img/logo.png') }}" class="logo-icon" alt="CREA AI Logo">
     <span class="logo-name">CREA AI</span>
   </a>
 </div>
@@ -259,6 +254,13 @@
       <div class="field-group">
         <label class="field-label" for="email">Email</label>
         <input class="field-input" type="email" id="email" name="email" required placeholder="Enter your Email" autocomplete="email">
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="role">Role</label>
+        <select class="field-input" id="role" name="role" required style="width: 100%; height: 42px; border-radius: 4px; border: 1px solid #ccc; padding: 0 10px; font-size: 14px; background-color: #fff; outline: none;">
+          <option value="loan_officer">Loan Officer</option>
+          <option value="admin">Admin</option>
+        </select>
       </div>
       <button type="submit" class="btn-primary">Send email code</button>
     </form>

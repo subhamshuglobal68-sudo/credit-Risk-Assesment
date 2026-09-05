@@ -113,3 +113,54 @@ document.getElementById('dataset-form')?.addEventListener('submit', async event 
     setButtonLoading(submitBtn, false);
   }
 });
+
+document.getElementById('download-batch-report')?.addEventListener('click', () => {
+  if (!batchGroups) return;
+  const allItems = [];
+  ['APPROVE', 'REVIEW', 'REJECT'].forEach(category => {
+    (batchGroups[category] || []).forEach(item => {
+      allItems.push(item);
+    });
+  });
+  if (allItems.length === 0) {
+    alert("No data available to download.");
+    return;
+  }
+  allItems.sort((a, b) => String(a.applicant_id).localeCompare(String(b.applicant_id)));
+  const headers = [
+    "Applicant ID",
+    "Credit Score (0-1000)",
+    "Default Probability",
+    "Recommendation",
+    "Income",
+    "Loan Amount",
+    "Existing Debt",
+    "Expected Loss",
+    "Statistical Anomaly",
+    "Primary Risk Factors"
+  ];
+  let csvContent = headers.join(",") + "\n";
+  allItems.forEach(item => {
+    const row = [
+      `"${item.applicant_id}"`,
+      item.risk_score,
+      `"${(item.probability_of_default * 100).toFixed(2)}%"`,
+      `"${item.recommendation}"`,
+      item.income,
+      item.loan_amount,
+      item.existing_debt,
+      item.expected_loss.toFixed(2),
+      item.is_anomalous ? "TRUE" : "FALSE",
+      `"${(item.top_risk_factors || []).join(' · ').replace(/"/g, '""')}"`
+    ];
+    csvContent += row.join(",") + "\n";
+  });
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", `credit_risk_batch_report_${new Date().toISOString().slice(0,10)}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+});

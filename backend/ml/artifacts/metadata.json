@@ -1,7 +1,7 @@
 {
   "selected_model": "logistic_regression",
-  "trained_at": "2026-08-25T18:01:57.385417+00:00",
-  "dataset_path": "C:\\Users\\subha\\Downloads\\credit risk\\Credit-Risk-Evaluator-AI\\ai-credit-risk\\backend\\data\\german_credit.csv",
+  "trained_at": "2026-08-29T17:15:15.462665+00:00",
+  "dataset_path": "C:\\Users\\subha\\Downloads\\credit-risk\\backend\\data\\german_credit.csv",
   "n_rows": 1000,
   "target_column": "class",
   "target_mapping": {
@@ -56,16 +56,82 @@
   ],
   "candidate_metrics": {
     "logistic_regression": {
+      "accuracy": 0.78,
+      "precision": 0.6667,
+      "recall": 0.5333,
+      "f1": 0.5926,
       "roc_auc": 0.804,
-      "f1": 0.5926
+      "pr_auc": 0.6351,
+      "brier_score": 0.155,
+      "calibration_quality": "Fair"
     },
     "random_forest": {
+      "accuracy": 0.785,
+      "precision": 0.7742,
+      "recall": 0.4,
+      "f1": 0.5275,
       "roc_auc": 0.7956,
-      "f1": 0.5275
+      "pr_auc": 0.6395,
+      "brier_score": 0.1653,
+      "calibration_quality": "Fair"
     },
     "xgboost": {
+      "accuracy": 0.735,
+      "precision": 0.5714,
+      "recall": 0.4667,
+      "f1": 0.5138,
       "roc_auc": 0.7796,
-      "f1": 0.5138
+      "pr_auc": 0.6337,
+      "brier_score": 0.1792,
+      "calibration_quality": "Fair"
+    }
+  },
+  "fairness_audit": {
+    "age": {
+      "available": true,
+      "status": "NORMAL",
+      "demographic_parity_difference": 0.1264,
+      "equal_opportunity_difference": 0.028,
+      "group_metrics": {
+        "Young (Age < 30)": {
+          "n": 79,
+          "approval_rate": 0.6835,
+          "true_positive_rate": 0.8667,
+          "false_positive_rate": 0.4412,
+          "false_negative_rate": 0.1333
+        },
+        "Older (Age >= 30)": {
+          "n": 121,
+          "approval_rate": 0.8099,
+          "true_positive_rate": 0.8947,
+          "false_positive_rate": 0.5,
+          "false_negative_rate": 0.1053
+        }
+      },
+      "disclaimer": "Fairness metrics are monitoring indicators calculated on the validation test set."
+    },
+    "gender": {
+      "available": true,
+      "status": "NORMAL",
+      "demographic_parity_difference": 0.1265,
+      "equal_opportunity_difference": 0.0798,
+      "group_metrics": {
+        "Female": {
+          "n": 61,
+          "approval_rate": 0.6721,
+          "true_positive_rate": 0.8293,
+          "false_positive_rate": 0.35,
+          "false_negative_rate": 0.1707
+        },
+        "Male": {
+          "n": 139,
+          "approval_rate": 0.7986,
+          "true_positive_rate": 0.9091,
+          "false_positive_rate": 0.525,
+          "false_negative_rate": 0.0909
+        }
+      },
+      "disclaimer": "Fairness metrics are monitoring indicators calculated on the validation test set."
     }
   },
   "contamination": 0.05,

@@ -16,6 +16,9 @@ function initAssessmentForm() {
   document.getElementById('assessment-form').addEventListener('submit', onSubmitAssessment);
   document.getElementById('btn-explain').addEventListener('click', onViewExplanation);
   document.getElementById('btn-scenario').addEventListener('click', onRunScenario);
+  document.getElementById('btn-report')?.addEventListener('click', () => {
+    window.open('/assessment/report', '_blank');
+  });
   document.getElementById('btn-reset').addEventListener('click', onNewAssessment);
 }
 
@@ -91,13 +94,27 @@ function renderResult(data) {
   if (panel) panel.classList.remove('hidden');
 
   const resScore = document.getElementById('res-score');
-  if (resScore) resScore.textContent = `${data.risk_score} / 1000`;
+  if (resScore) resScore.textContent = `${data.risk_score_100} / 100 (${data.risk_score} / 1000)`;
+
+  const resDefaultRisk = document.getElementById('res-default-risk-score');
+  if (resDefaultRisk) resDefaultRisk.textContent = `${data.default_risk_score_100} / 100`;
 
   const resProb = document.getElementById('res-prob');
   if (resProb) resProb.textContent = formatPercent(data.probability_of_default);
 
   const resCategory = document.getElementById('res-category');
   if (resCategory) resCategory.textContent = data.risk_category;
+
+  const fraudStatus = document.getElementById('res-fraud-status');
+  if (fraudStatus && data.fraud) {
+    if (data.fraud.is_suspicious) {
+      fraudStatus.textContent = `ALERT: ${data.fraud.flags.join(' · ')}`;
+      fraudStatus.className = 'badge status-bad';
+    } else {
+      fraudStatus.textContent = 'SECURE';
+      fraudStatus.className = 'badge status-good';
+    }
+  }
 
   const recommendation = document.getElementById('res-recommendation');
   if (recommendation) {

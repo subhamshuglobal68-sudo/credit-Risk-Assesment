@@ -1,9 +1,17 @@
 {% extends "base.html" %}
 {% block title %}Model Monitoring — CreditGuard AI{% endblock %}
 {% block content %}
-<header class="page-header">
-  <h1>Model Monitoring &amp; Explainability</h1>
-  <p class="muted">Model performance, training details, and how explanations are produced.</p>
+<header class="page-header" style="--bg-text: 'MODEL'; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+  <div>
+    <h1>Model Monitoring &amp; Explainability</h1>
+    <p class="muted">Model performance, training details, and how explanations are produced.</p>
+  </div>
+  <div>
+    <button id="btn-retrain" class="btn btn-primary" style="display: flex; align-items: center; gap: 8px;">
+      <span class="material-symbols-outlined">restart_alt</span>
+      <span>Retrain Model</span>
+    </button>
+  </div>
 </header>
 
 {% if not model_ready %}
@@ -70,4 +78,28 @@
   repayment behaviour.</p>
 </section>
 {% endif %}
+
+<script>
+  document.getElementById('btn-retrain')?.addEventListener('click', async () => {
+    if (!confirm('Are you sure you want to trigger model retraining? This will run the ML training pipeline in the background and reload the latest metrics.')) {
+      return;
+    }
+    const btn = document.getElementById('btn-retrain');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-symbols-outlined">sync</span><span>Retraining...</span>';
+    
+    try {
+      const res = await fetch('/api/retrain', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Retraining failed.');
+      alert('Model retrained successfully! Reloading page to display the new performance metrics.');
+      window.location.reload();
+    } catch (err) {
+      alert('Error triggering retraining: ' + err.message);
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+    }
+  });
+</script>
 {% endblock %}

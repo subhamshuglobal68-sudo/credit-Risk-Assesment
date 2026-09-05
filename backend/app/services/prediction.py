@@ -184,7 +184,7 @@ def preprocess(registry: ModelRegistry, frame: pd.DataFrame) -> np.ndarray:
 
 
 def predict_core(applicant: dict, registry: ModelRegistry | None = None) -> dict:
-    """Score one applicant: probability + risk band + anomaly flag.
+    """Score one applicant: probability + risk band + anomaly flag + fraud flags.
 
     This is the shared primitive used by BOTH /api/predict and /api/scenario
     - scenario logic never re-implements scoring.
@@ -201,11 +201,17 @@ def predict_core(applicant: dict, registry: ModelRegistry | None = None) -> dict
     )
     anomaly = anomaly_service.check_anomaly(registry.anomaly_model, x_row)
 
+    from .fraud import detect_fraud_flags
+    fraud = detect_fraud_flags(applicant)
+
     return {
         "risk": risk,
         "probability": round(probability, 4),
         "anomaly": anomaly["is_anomalous"],
         "anomaly_score": anomaly["score"],
+        "is_suspicious": fraud["is_suspicious"],
+        "fraud_flags": fraud["fraud_flags"],
+        "fraud_severity": fraud["severity_score"],
         "model_version": registry.version,
         "_x_row": x_row,  # internal: reused by explanation step, popped before response
     }
@@ -244,13 +250,19 @@ def predict_batch(applicants: list, registry: ModelRegistry | None = None) -> li
     decision = registry.anomaly_model.decision_function(x_batch)
     unusualness = np.clip(0.5 - decision, 0, 1)
 
+    from .fraud import detect_fraud_flags
+
     results = []
     for i in range(len(applicants)):
+        fraud = detect_fraud_flags(applicants[i])
         results.append({
             "risk": risks[i],
             "probability": round(float(probabilities[i]), 4),
             "anomaly": bool(raw_pred[i] == -1),
             "anomaly_score": round(float(unusualness[i]), 4),
+            "is_suspicious": fraud["is_suspicious"],
+            "fraud_flags": fraud["fraud_flags"],
+            "fraud_severity": fraud["severity_score"],
             "model_version": registry.version,
             "_x_row": x_batch[i],
         })

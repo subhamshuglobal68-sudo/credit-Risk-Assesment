@@ -51,24 +51,17 @@ def map_frontend_to_backend(frontend_data: Dict[str, Any]) -> Dict[str, Any]:
     """Translate frontend's user-friendly fields to backend's German Credit fields."""
     backend_data = FRONTEND_TO_BACKEND_DEFAULTS.copy()
 
-    # Monetary values are passed through on the model's native scale (the
-    # preprocessor standardizes them anyway). No INR<->DM division is applied
-    # here: dividing by a large rate produced unrealistically tiny
-    # credit_amounts (e.g. 100 DM) far outside the training range, which the
-    # model treated as extremely high risk for every applicant.
     currency = frontend_data.get("currency", "INR")
+
+    # Pass raw and alternative fields to the backend for auditing and fraud checking
+    for k in ["rent_on_time", "utility_on_time", "recharge_consistency", "income", "existing_debt", "loan_amount", "credit_history_years", "employment_duration_years", "num_open_accounts", "late_payments_last_2y", "housing_status", "employment_type", "currency"]:
+        if k in frontend_data:
+            backend_data[k] = frontend_data[k]
 
     if "age" in frontend_data:
         backend_data["age"] = int(frontend_data["age"])
 
     if "loan_amount" in frontend_data:
-        # Scale the (typically INR) loan amount into the model's native
-        # credit_amount range. The German Credit model was trained on amounts
-        # centered ~3,200 with a meaningful 0-10k spread; feeding it a raw
-        # 100k INR loan is ~15 sigma above the mean and so reads as near-100%
-        # default risk for EVERY applicant. Dividing by AMOUNT_SCALE lands a
-        # normal INR loan (roughly 30k-300k) in the 1k-10k range the model
-        # actually understands.
         backend_data["credit_amount"] = float(frontend_data["loan_amount"]) / AMOUNT_SCALE
 
     if "employment_duration_years" in frontend_data:
@@ -82,22 +75,26 @@ def map_frontend_to_backend(frontend_data: Dict[str, Any]) -> Dict[str, Any]:
         else:
             backend_data["employment"] = ">=7"
 
+    rent = frontend_data.get("rent_on_time", "N/A")
+    utility = frontend_data.get("utility_on_time", "N/A")
+
     if "credit_history_years" in frontend_data:
-        # Long (or clean) credit history is GOOD and must never downgrade to
-        # the worst category. Was previously inverted, forcing rejections.
         years = float(frontend_data["credit_history_years"])
-        if years <= 0:
-            backend_data["credit_history"] = "no credits/all paid"
-        elif years < 3:
-            backend_data["credit_history"] = "all paid"
-        elif years < 5:
+        # Thin-file boost: if no credit history but good alternative data
+        if years <= 0 and (rent == "On Time (Last 12 Months)" or utility == "On Time (Last 12 Months)"):
             backend_data["credit_history"] = "existing paid"
+            backend_data["existing_credits"] = 2
         else:
-            backend_data["credit_history"] = "all paid"
+            if years <= 0:
+                backend_data["credit_history"] = "no credits/all paid"
+            elif years < 3:
+                backend_data["credit_history"] = "all paid"
+            elif years < 5:
+                backend_data["credit_history"] = "existing paid"
+            else:
+                backend_data["credit_history"] = "all paid"
 
     if "num_open_accounts" in frontend_data:
-        # Backend validation requires existing_credits in [1..10]; clamp so a
-        # value of 0 (empty slider edge) never produces an invalid payload.
         backend_data["existing_credits"] = int(max(1, min(int(frontend_data["num_open_accounts"]), 10)))
 
     if "housing_status" in frontend_data:
@@ -112,9 +109,6 @@ def map_frontend_to_backend(frontend_data: Dict[str, Any]) -> Dict[str, Any]:
 
     if "income" in frontend_data:
         income = float(frontend_data["income"])
-        # Income-based checking/savings standing. Thresholds tuned to a
-        # reasonable spread over common (INR-equivalent) income values so a
-        # well-off applicant is not pushed to the lowest tiers.
         if income > 200000:
             backend_data["checking_status"] = ">=200"
             backend_data["savings_status"] = ">=1000"
@@ -136,9 +130,6 @@ def map_frontend_to_backend(frontend_data: Dict[str, Any]) -> Dict[str, Any]:
     if "existing_debt" in frontend_data:
         debt = float(frontend_data["existing_debt"])
         income = float(frontend_data.get("income", 0) or 0)
-        # DTI-based installment commitment (1 = high burden ... 4 = low burden).
-        # Debt and income are in frontend (INR) units; DTI handles currency
-        # implicitly, and absolute debt thresholds are set to common INR levels.
         if income > 0 and debt / (income or 1) > 0.5:
             backend_data["installment_commitment"] = 1
         elif debt > 500000:
@@ -157,8 +148,6 @@ def map_frontend_to_backend(frontend_data: Dict[str, Any]) -> Dict[str, Any]:
         elif late >= 1:
             backend_data["credit_history"] = "delayed previously"
 
-    # Estimate loan duration in months based on loan amount. Use the model
-    # scale for consistency (the / AMOUNT_SCALE mirrors credit_amount above).
     if "loan_amount" in frontend_data:
         loan_amt = float(frontend_data["loan_amount"]) / AMOUNT_SCALE
         if loan_amt > 30000:
@@ -186,18 +175,46 @@ def map_backend_response_to_frontend(
     explanation = backend_response.get("explanation", {})
     model_version = backend_response.get("model_version", "unknown")
 
-    if risk == "Low":
+    # Apply alternative data probability boost / penalty
+    rent = frontend_inputs.get("rent_on_time", "")
+    utility = frontend_inputs.get("utility_on_time", "")
+    recharge = frontend_inputs.get("recharge_consistency", "")
+
+    boost_applied = False
+    penalty_applied = False
+
+    if rent == "On Time (Last 12 Months)" or utility == "On Time (Last 12 Months)":
+        prob = max(0.01, prob * 0.75)  # 25% reduction in default probability
+        boost_applied = True
+    elif rent == "3+ Late Payments" or utility == "3+ Late Payments":
+        prob = min(0.99, prob * 1.30)  # 30% increase in default probability
+        penalty_applied = True
+
+    if recharge == "Consistent Monthly Recharge" and not penalty_applied:
+        prob = max(0.01, prob * 0.90)  # 10% reduction
+    elif recharge == "Irregular / Delayed Recharges":
+        prob = min(0.99, prob * 1.10)  # 10% increase
+
+    if prob < 0.33:
+        risk = "Low"
         risk_category = "LOW"
         recommendation = "APPROVE"
         risk_score = int(700 + (1 - prob) * 300)
-    elif risk == "Medium":
+    elif prob < 0.66:
+        risk = "Medium"
         risk_category = "MEDIUM"
         recommendation = "REVIEW"
         risk_score = int(500 + (1 - prob) * 200)
     else:
+        risk = "High"
         risk_category = "HIGH"
         recommendation = "REJECT"
         risk_score = int(prob * 500)
+
+    # 0-100 creditworthiness score (100 is best, 0 is worst)
+    creditworthiness_score_100 = int(round((1 - prob) * 100))
+    # 0-100 default risk score (100 is worst, 0 is best)
+    default_risk_score_100 = int(round(prob * 100))
 
     loan_amount = frontend_inputs.get("loan_amount", 50000)
     expected_loss = round(prob * loan_amount * 0.45, 2)
@@ -206,6 +223,8 @@ def map_backend_response_to_frontend(
     dec_factors = explanation.get("risk_reducing_factors", [])
 
     decision_reasons = []
+    if boost_applied:
+        decision_reasons.append("Alternative payment history (rent/utilities) has boosted credit profile.")
     if inc_factors:
         decision_reasons.append(
             f"Key risk factor: {inc_factors[0].get('explanation', 'Unknown')}"
@@ -228,8 +247,14 @@ def map_backend_response_to_frontend(
         else:
             anomaly_label = "Slight Anomaly"
 
+    is_suspicious = backend_response.get("is_suspicious", False)
+    fraud_flags = backend_response.get("fraud_flags", [])
+    fraud_severity = backend_response.get("fraud_severity", 0.0)
+
     return {
         "risk_score": min(1000, max(0, risk_score)),
+        "risk_score_100": creditworthiness_score_100,
+        "default_risk_score_100": default_risk_score_100,
         "probability_of_default": round(prob, 4),
         "risk_category": risk_category,
         "recommendation": recommendation,
@@ -239,6 +264,11 @@ def map_backend_response_to_frontend(
             "anomaly_score": round(float(anomaly_score), 3),
             "label": anomaly_label,
             "flags": [],
+        },
+        "fraud": {
+            "is_suspicious": is_suspicious,
+            "flags": fraud_flags,
+            "severity": fraud_severity,
         },
         "decision_reasons": decision_reasons,
         "decision_thresholds": {"approve_score_min": 700, "reject_score_below": 500},
@@ -308,6 +338,8 @@ def map_backend_scenario_to_frontend(
     return {
         "before": {
             "risk_score": min(1000, max(0, orig_score)),
+            "risk_score_100": int(round((1 - orig_prob) * 100)),
+            "default_risk_score_100": int(round(orig_prob * 100)),
             "probability_of_default": round(orig_prob, 4),
             "risk_category": risk_to_category(orig_risk),
             "risk_label": orig_risk,
@@ -323,6 +355,8 @@ def map_backend_scenario_to_frontend(
         },
         "after": {
             "risk_score": min(1000, max(0, new_score)),
+            "risk_score_100": int(round((1 - new_prob) * 100)),
+            "default_risk_score_100": int(round(new_prob * 100)),
             "probability_of_default": round(new_prob, 4),
             "risk_category": risk_to_category(new_risk),
             "risk_label": new_risk,
@@ -338,6 +372,7 @@ def map_backend_scenario_to_frontend(
         },
         "change": {
             "risk_score_delta": new_score - orig_score,
+            "risk_score_100_delta": int(round((1 - new_prob) * 100)) - int(round((1 - orig_prob) * 100)),
             "probability_delta": round(new_prob - orig_prob, 4),
             "category_changed": risk_to_category(orig_risk) != risk_to_category(new_risk),
             "from_category": risk_to_category(orig_risk),

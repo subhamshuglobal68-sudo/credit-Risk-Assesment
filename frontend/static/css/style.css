@@ -26,7 +26,7 @@ body {
 }
 
 .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 32px; }
-.brand-icon { font-size: 28px; color: var(--accent); }
+.brand-icon { width: 32px; height: 32px; object-fit: contain; border-radius: 4px; }
 .brand-title { font-weight: 700; font-size: 16px; }
 .brand-sub { font-size: 11px; color: var(--muted); }
 
@@ -1720,3 +1720,654 @@ html.dark .field input, html.dark .field select { background: var(--panel); }
 .user-dropdown-item span {
   font-size: 18px;
 }
+
+/* =====================================================================
+   MODERN MINIMAL SAAS REDESIGN OVERRIDES
+   ===================================================================== */
+
+/* 1. Reset color tokens for Light and Dark themes */
+:root {
+  /* Light theme: clean slate backgrounds, crisp borders, dark text */
+  --bg: #f8fafc !important;
+  --panel: #ffffff !important;
+  --panel-2: #f1f5f9 !important;
+  --border: rgba(15, 23, 42, 0.06) !important;
+  --text: #0f172a !important;
+  --muted: #64748b !important;
+  --accent: #0d9488 !important;
+  --accent-2: #0f766e !important;
+  --accent-glow: rgba(13, 148, 136, 0.08) !important;
+  --good: #16a34a !important;
+  --warn: #d97706 !important;
+  --bad: #dc2626 !important;
+  --radius: 16px !important;
+}
+
+html.dark {
+  /* Dark theme: near-black, glowing translucent cards, off-white text */
+  --bg: #080b11 !important;
+  --panel: #0f121d !important;
+  --panel-2: #161926 !important;
+  --border: rgba(255, 255, 255, 0.06) !important;
+  --text: #f3f4f6 !important;
+  --muted: #9ca3af !important;
+  --accent: #0d9488 !important;
+  --accent-2: #14b8a6 !important;
+  --accent-glow: rgba(13, 148, 136, 0.15) !important;
+  --good: #10b981 !important;
+  --warn: #f59e0b !important;
+  --bad: #ef4444 !important;
+  --radius: 16px !important;
+}
+
+/* 2. Floating Sidebar & Collapsed Layout */
+.sidebar {
+  position: fixed !important;
+  top: 16px !important;
+  left: 16px !important;
+  height: calc(100vh - 32px) !important;
+  width: 250px !important;
+  border-radius: 16px !important;
+  border: 1px solid var(--border) !important;
+  background: var(--panel) !important;
+  z-index: 50 !important;
+  padding: 24px 0 !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04) !important;
+  transition: all var(--dur-slow) var(--ease) !important;
+}
+html.dark .sidebar {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Sidebar toggle alignment and styling */
+.sidebar-toggle {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Adjust sidebar links as floating pills */
+.nav-link {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  margin: 4px 16px !important;
+  padding: 10px 16px !important;
+  border-radius: 30px !important;
+  color: var(--muted) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  transition: all var(--dur-fast) var(--ease) !important;
+}
+.nav-link:hover {
+  background: var(--panel-2) !important;
+  color: var(--text) !important;
+}
+.nav-link.active {
+  background: var(--accent) !important;
+  color: #ffffff !important;
+}
+html.dark .nav-link.active {
+  background: var(--accent) !important;
+  color: #ffffff !important;
+}
+
+/* Content spacing adjust for floating sidebar */
+.content {
+  margin-left: 282px !important; /* 250px sidebar width + 16px margin + 16px padding spacing */
+  padding: 104px 24px 48px !important;
+  transition: margin-left var(--dur-slow) var(--ease) !important;
+}
+.topbar {
+  left: 282px !important;
+  background: var(--bg) !important;
+  border-bottom: 1px solid var(--border) !important;
+  transition: left var(--dur-slow) var(--ease), background var(--dur-fast) var(--ease) !important;
+}
+
+/* Collapsed sidebar layout handles */
+.sidebar.collapsed {
+  width: 76px !important;
+}
+.sidebar.collapsed ~ .content {
+  margin-left: 108px !important; /* 76px sidebar + 16px margin + 16px spacing */
+}
+.sidebar.collapsed ~ .topbar {
+  left: 108px !important;
+}
+
+/* Collapsed active link highlight adjustments */
+.sidebar.collapsed .nav-link {
+  justify-content: center !important;
+  padding: 10px 0 !important;
+  margin: 4px 12px !important;
+}
+
+/* 3. Oversized Decorative Background Text */
+.page-header {
+  position: relative !important;
+  margin-bottom: 40px !important;
+  overflow: visible !important;
+  padding-top: 12px !important;
+}
+.page-header h1 {
+  position: relative !important;
+  z-index: 2 !important;
+  font-size: 32px !important;
+  line-height: 40px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+  color: var(--text) !important;
+  margin: 0 !important;
+}
+.page-header::before {
+  content: var(--bg-text, "OVERVIEW") !important;
+  position: absolute !important;
+  left: -8px !important;
+  top: -24px !important;
+  font-size: 72px !important;
+  font-weight: 900 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  pointer-events: none !important;
+  line-height: 1 !important;
+  z-index: 1 !important;
+  transition: color var(--dur-fast) var(--ease) !important;
+}
+html.dark .page-header::before {
+  color: rgba(255, 255, 255, 0.02) !important;
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.01) !important;
+}
+html:not(.dark) .page-header::before {
+  color: rgba(0, 0, 0, 0.015) !important;
+  -webkit-text-stroke: 1px rgba(0, 0, 0, 0.008) !important;
+}
+
+/* 4. Section Headings with Accent Icons */
+.panel h2, h2.section-heading {
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.01em !important;
+  margin-top: 0 !important;
+  margin-bottom: 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  color: var(--text) !important;
+}
+.panel h2::after, h2.section-heading::after {
+  content: ' →' !important;
+  color: var(--accent) !important;
+  font-size: 18px !important;
+  font-weight: 500 !important;
+  transition: transform var(--dur-fast) var(--ease) !important;
+}
+.panel h2:hover::after, h2.section-heading:hover::after {
+  transform: translateX(4px) !important;
+}
+
+/* 5. Modern Card / Panel Redesign */
+.stat-card,
+.panel,
+.chart-panel,
+.card-neon,
+.wi-banner,
+.gauge-card,
+.rc-kpi,
+.auth-card,
+.fairness-card {
+  background: var(--panel) !important;
+  border-radius: var(--radius) !important;
+  border: 1px solid var(--border) !important;
+  padding: 24px !important;
+  margin-bottom: 24px !important;
+  transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.01) !important;
+}
+html.dark .stat-card,
+html.dark .panel,
+html.dark .chart-panel,
+html.dark .card-neon,
+html.dark .wi-banner,
+html.dark .gauge-card,
+html.dark .rc-kpi,
+html.dark .auth-card,
+html.dark .fairness-card {
+  background: var(--panel) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03), 0 10px 30px rgba(0, 0, 0, 0.3) !important;
+}
+html:not(.dark) .stat-card,
+html:not(.dark) .panel,
+html:not(.dark) .chart-panel,
+html:not(.dark) .card-neon,
+html:not(.dark) .wi-banner,
+html:not(.dark) .gauge-card,
+html:not(.dark) .rc-kpi,
+html:not(.dark) .auth-card,
+html:not(.dark) .fairness-card {
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04) !important;
+  border: 1px solid var(--border) !important;
+}
+
+/* 6. Form Fields */
+.field input,
+.field select,
+.field-input,
+input[type="text"],
+input[type="email"],
+input[type="number"],
+select,
+textarea {
+  background: var(--panel-2) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text) !important;
+  padding: 12px 16px !important;
+  border-radius: 10px !important;
+  font-size: 14px !important;
+  transition: all var(--dur-fast) var(--ease) !important;
+  width: 100% !important;
+}
+.field input:focus,
+.field select:focus,
+.field-input:focus,
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none !important;
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px var(--accent-glow) !important;
+  background: var(--panel) !important;
+}
+
+/* Placeholder styling */
+::placeholder {
+  color: var(--muted) !important;
+  opacity: 0.7 !important;
+}
+
+/* 7. Primary Buttons */
+.btn-primary,
+.auth-btn,
+.btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 10px 24px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  border-radius: 30px !important;
+  cursor: pointer !important;
+  transition: all var(--dur-fast) var(--ease) !important;
+  text-decoration: none !important;
+  border: 1px solid transparent !important;
+}
+/* Unified Teal Primary Buttons */
+.btn-primary,
+.auth-btn {
+  background: var(--accent) !important;
+  color: #ffffff !important;
+  border-color: var(--accent) !important;
+}
+.btn-primary:hover,
+.auth-btn:hover {
+  background: var(--accent-2) !important;
+  color: #ffffff !important;
+  border-color: var(--accent-2) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Secondary Button styling */
+.btn:not(.btn-primary) {
+  background: var(--panel-2) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+}
+.btn:not(.btn-primary):hover {
+  background: var(--border) !important;
+  border-color: var(--muted) !important;
+}
+
+/* 8. Small Pill Badges / Tags */
+.badge {
+  display: inline-block !important;
+  padding: 4px 12px !important;
+  border-radius: 30px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+  background: var(--panel-2) !important;
+  border: 1px solid var(--border) !important;
+}
+.status-good {
+  color: var(--good) !important;
+  border-color: rgba(16, 185, 129, 0.2) !important;
+  background: rgba(16, 185, 129, 0.08) !important;
+}
+.status-warn {
+  color: var(--warn) !important;
+  border-color: rgba(245, 158, 11, 0.2) !important;
+  background: rgba(245, 158, 11, 0.08) !important;
+}
+.status-bad {
+  color: var(--bad) !important;
+  border-color: rgba(239, 68, 68, 0.2) !important;
+  background: rgba(239, 68, 68, 0.08) !important;
+}
+
+/* 9. Widgets (Icon-badge pattern) */
+.widget-card {
+  display: flex !important;
+  flex-direction: column !important;
+  text-decoration: none !important;
+  gap: 12px !important;
+}
+.widget-head {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+.widget-head .material-symbols-outlined {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 8px !important;
+  background: var(--accent-glow) !important;
+  display: grid !important;
+  place-items: center !important;
+  color: var(--accent) !important;
+}
+.widget-title {
+  font-weight: 700 !important;
+  font-size: 15px !important;
+  color: var(--text) !important;
+}
+.widget-cta {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: var(--accent) !important;
+  margin-top: auto !important;
+}
+
+/* 10. Checklist Styling */
+.checklist-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  color: var(--muted) !important;
+  margin-bottom: 8px !important;
+}
+.checklist-icon {
+  width: 18px !important;
+  height: 18px !important;
+  border-radius: 50% !important;
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: var(--good) !important;
+  display: grid !important;
+  place-items: center !important;
+  font-size: 12px !important;
+}
+
+/* 11. Social circular icons */
+.btn-social {
+  border-radius: 30px !important;
+  padding: 12px 20px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px !important;
+  background: var(--panel-2) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text) !important;
+  font-weight: 500 !important;
+}
+.btn-social:hover {
+  background: var(--border) !important;
+}
+
+/* 12. Adjust table designs */
+.data-table th, .data-table td {
+  padding: 12px 16px !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+/* 13. Card Neon Content Accessibility Overrides */
+.card-neon {
+  color: var(--text) !important;
+}
+.card-neon .stat-label {
+  color: var(--muted) !important;
+}
+.card-neon .stat-value {
+  color: var(--text) !important;
+}
+.card-neon .stat-sub {
+  color: var(--muted) !important;
+}
+
+/* Maintain approved/review/rejected stat colors */
+.stat-card:nth-child(2) .stat-value, .status-good {
+  color: var(--good) !important;
+}
+.stat-card:nth-child(3) .stat-value, .status-warn {
+  color: var(--warn) !important;
+}
+.stat-card:nth-child(4) .stat-value, .status-bad {
+  color: var(--bad) !important;
+}
+
+/* Category Card Active Border Outline in Dark Mode */
+html.dark .category-card.active,
+html.dark .category-card:hover {
+  outline: 2px solid #ffffff !important;
+}
+
+/* 14. Floating Pill-Shaped Top Navigation Bar Redesign */
+.topbar {
+  position: fixed !important;
+  top: 16px !important;
+  right: 16px !important;
+  left: 282px !important; /* Aligns with floating sidebar content margin */
+  height: 64px !important;
+  border-radius: 32px !important;
+  background: var(--panel) !important;
+  border: 1px solid var(--border) !important;
+  padding: 0 24px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03) !important;
+  z-index: 40 !important;
+  transition: left var(--dur-slow) var(--ease),
+              background var(--dur-fast) var(--ease),
+              box-shadow var(--dur-fast) var(--ease) !important;
+}
+
+/* Light Mode specific topbar shadow override */
+html:not(.dark) .topbar {
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04) !important;
+}
+
+/* Dark Mode specific topbar inner glow override */
+html.dark .topbar {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03), 0 10px 30px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* Sidebar collapsed state handles topbar left */
+.sidebar.collapsed ~ .topbar {
+  left: 108px !important; /* Aligns with collapsed sidebar content margin */
+}
+
+/* Responsive topbar layout */
+@media (max-width: 1250px) {
+  .topbar {
+    left: 108px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .topbar {
+    left: 16px !important;
+    right: 16px !important;
+    top: 16px !important;
+  }
+}
+
+/* Reset search-box input inside the pill header */
+.search-box input {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  outline: none !important;
+  width: 100% !important;
+}
+
+/* Soft accent-glow background hover highlights for icon buttons in top header */
+.topbar .icon-button {
+  transition: background-color var(--dur-fast) var(--ease),
+              color var(--dur-fast) var(--ease),
+              transform var(--dur-fast) var(--ease-spring) !important;
+}
+.topbar .icon-button:hover {
+  background-color: var(--accent-glow) !important;
+  color: var(--accent) !important;
+  transform: scale(1.05) !important;
+}
+
+/* Styling for btn-neon-grey buttons to use Teal Accent in both themes */
+.btn-neon-grey,
+html.dark .btn-neon-grey {
+  background: var(--accent) !important;
+  color: #ffffff !important;
+  border: 1px solid var(--accent) !important;
+}
+.btn-neon-grey:hover,
+html.dark .btn-neon-grey:hover {
+  background: var(--accent-2) !important;
+  color: #ffffff !important;
+  border-color: var(--accent-2) !important;
+}
+
+/* --- High-Fidelity Header Redesign (Screenshot Match) --- */
+.topbar-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 6px 16px !important;
+  background: var(--panel-2) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 20px !important;
+  color: var(--accent) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.05em !important;
+}
+.live-dot {
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  background: var(--accent) !important;
+  display: inline-block !important;
+  box-shadow: 0 0 8px var(--accent) !important;
+}
+
+.topbar-btn {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 4px !important;
+  border: 1px solid var(--border) !important;
+  background: var(--panel) !important;
+  color: var(--muted) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+  transition: all var(--dur-fast) var(--ease) !important;
+  padding: 0 !important;
+}
+.topbar-btn:hover {
+  background: var(--panel-2) !important;
+  color: var(--text) !important;
+  border-color: var(--muted) !important;
+}
+
+.topbar-btn.notifications-btn .notif-dot {
+  position: absolute !important;
+  top: 8px !important;
+  right: 8px !important;
+  width: 8px !important;
+  height: 8px !important;
+  background: var(--accent) !important; /* Matches green accent color */
+  border-radius: 50% !important;
+  border: 1.5px solid var(--panel) !important;
+}
+
+.topbar-btn.theme-toggle {
+  width: auto !important;
+  padding: 0 16px !important;
+  gap: 8px !important;
+}
+.topbar-btn.theme-toggle .theme-text {
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.02em !important;
+  color: var(--text) !important;
+}
+
+.user-capsule {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 4px 16px 4px 6px !important;
+  border-radius: 30px !important;
+  border: 1px solid var(--border) !important;
+  background: var(--panel) !important;
+  cursor: pointer !important;
+  position: relative !important;
+  transition: all var(--dur-fast) var(--ease) !important;
+}
+.user-capsule:hover {
+  background: var(--panel-2) !important;
+  border-color: var(--muted) !important;
+}
+.user-capsule .avatar {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 50% !important;
+  background: var(--accent) !important;
+  color: #ffffff !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-weight: 700 !important;
+  font-size: 14px !important;
+}
+.user-capsule .user-details {
+  display: flex !important;
+  flex-direction: column !important;
+  text-align: left !important;
+}
+.user-capsule .user-name {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: var(--text) !important;
+  line-height: 1.2 !important;
+}
+.user-capsule .user-role {
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.05em !important;
+  color: var(--accent) !important;
+  line-height: 1.2 !important;
+  margin-top: 1px !important;
+}
+
+/* Ensure user dropdown works inside capsule positioning */
+.user-capsule .user-dropdown {
+  left: auto !important;
+  right: 0 !important;
+  top: calc(100% + 12px) !important;
+}
+
+
+
+

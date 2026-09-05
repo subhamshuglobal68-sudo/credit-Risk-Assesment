@@ -193,27 +193,27 @@
   
   <!-- Account selection list -->
   <div class="account-list">
-    <div class="account-item" onclick="selectAccount('Subham Shu', 'subha@gmail.com')">
+    <div class="account-item" onclick="selectAccount('Subham Shu', 'subha@gmail.com', 'admin')">
       <div class="account-avatar" style="background-color: #0b57d0;">S</div>
       <div class="account-info">
         <span class="account-name">Subham Shu</span>
-        <span class="account-email">subha@gmail.com</span>
+        <span class="account-email">subha@gmail.com (ADMIN)</span>
       </div>
     </div>
     
-    <div class="account-item" onclick="selectAccount('Crea Admin', 'admin@crea.ai')">
+    <div class="account-item" onclick="selectAccount('Crea Admin', 'admin@crea.ai', 'admin')">
       <div class="account-avatar" style="background-color: #b3261e;">C</div>
       <div class="account-info">
         <span class="account-name">Crea Admin</span>
-        <span class="account-email">admin@crea.ai</span>
+        <span class="account-email">admin@crea.ai (ADMIN)</span>
       </div>
     </div>
     
-    <div class="account-item" onclick="selectAccount('Demo User', 'demo@crea.ai')">
+    <div class="account-item" onclick="selectAccount('Demo User', 'demo@crea.ai', 'loan_officer')">
       <div class="account-avatar" style="background-color: #128c7e;">D</div>
       <div class="account-info">
         <span class="account-name">Demo User</span>
-        <span class="account-email">demo@crea.ai</span>
+        <span class="account-email">demo@crea.ai (LOAN OFFICER)</span>
       </div>
     </div>
   </div>
@@ -229,13 +229,20 @@
       <label for="custom-email">Email Address</label>
       <input type="email" id="custom-email" name="email" required placeholder="name@domain.com">
     </div>
+    <div class="input-field">
+      <label for="custom-role">Role</label>
+      <select id="custom-role" name="role" style="width:100%; padding:12px; border:1px solid #747775; border-radius:4px; font-size:14px; background:#fff;">
+        <option value="loan_officer">Loan Officer</option>
+        <option value="admin">Admin</option>
+      </select>
+    </div>
     <button type="submit" class="btn-submit">Continue</button>
   </form>
 </div>
 
 <script>
-function selectAccount(name, email) {
-  const url = "{{ url_for('google_auth_callback') }}?name=" + encodeURIComponent(name) + "&email=" + encodeURIComponent(email);
+function selectAccount(name, email, role) {
+  const url = "{{ url_for('google_auth_callback') }}?name=" + encodeURIComponent(name) + "&email=" + encodeURIComponent(email) + "&role=" + encodeURIComponent(role || 'loan_officer');
   window.location.href = url;
 }
 </script>

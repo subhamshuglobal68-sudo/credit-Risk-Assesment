@@ -134,6 +134,12 @@ function renderDetail(r) {
         `<button class="btn btn-sm${r.status === s ? ' btn-selected' : ''}" data-status="${s}">${escapeHtml(humanStatus(s))}</button>`
       ).join('')}
     </div>
+    <div class="rc-actions" style="margin-top: 10px;">
+      <button class="btn btn-sm btn-primary" id="rc-btn-report" type="button" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px;">
+        <span class="material-symbols-outlined" style="font-size: 16px;">picture_as_pdf</span>
+        <span>Generate Assessment Report</span>
+      </button>
+    </div>
 
     <h4 class="rc-notes-head">Notes</h4>
     <div id="rc-notes-list">
@@ -163,6 +169,9 @@ function renderDetail(r) {
   // Wire actions
   body.querySelectorAll('[data-status]').forEach(btn => {
     btn.addEventListener('click', () => updateStatus(r.id, btn.dataset.status, btn));
+  });
+  document.getElementById('rc-btn-report').addEventListener('click', () => {
+    window.open('/assessment/report?review_id=' + r.id, '_blank');
   });
   document.getElementById('rc-add-note-btn').addEventListener('click', addNote);
 

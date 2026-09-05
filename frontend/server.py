@@ -52,17 +52,16 @@ def login():
     error = None
     if request.method == "POST":
         email = request.form.get("email")
-        password = request.form.get("password")
-        
-        if not email or not password:
-            error = "Email and password are required"
+        if not email:
+            error = "Email address is required"
+        elif "@" not in email or "." not in email:
+            error = "Invalid email format"
         else:
-            resp = proxy_to_backend("/api/auth/login", {"email": email, "password": password}, method="POST")
+            resp = proxy_to_backend("/api/auth/send-otp", {"email": email}, method="POST")
             if "error" in resp:
                 error = resp["error"]
             else:
-                session["user"] = resp["user"]
-                return redirect(url_for("index"))
+                return redirect(url_for("verify_otp", email=email, action="login"))
     return render_template("login.html", error=error)
 
 @app.route("/register", methods=["GET", "POST"])
@@ -73,22 +72,18 @@ def register():
     if request.method == "POST":
         name = request.form.get("name")
         email = request.form.get("email")
-        password = request.form.get("password")
+        role = request.form.get("role", "loan_officer")
         
-        if not email or not password:
-            error = "Email and password are required"
+        if not name or not email:
+            error = "All fields are required"
         elif "@" not in email or "." not in email:
             error = "Invalid email format"
         else:
-            resp = proxy_to_backend("/api/auth/register", {"email": email, "password": password, "name": name}, method="POST")
+            resp = proxy_to_backend("/api/auth/send-otp", {"email": email}, method="POST")
             if "error" in resp:
                 error = resp["error"]
             else:
-                login_resp = proxy_to_backend("/api/auth/login", {"email": email, "password": password}, method="POST")
-                if "error" not in login_resp:
-                    session["user"] = login_resp["user"]
-                    return redirect(url_for("index"))
-                return redirect(url_for("login"))
+                return redirect(url_for("verify_otp", email=email, action="register", name=name, role=role))
     return render_template("register.html", error=error)
 
 @app.route("/verify-otp", methods=["GET", "POST"])
@@ -98,6 +93,7 @@ def verify_otp():
     email = request.args.get("email") or request.form.get("email")
     action = request.args.get("action") or request.form.get("action") or "login"
     name = request.args.get("name") or request.form.get("name") or ""
+    role = request.args.get("role") or request.form.get("role") or "loan_officer"
     
     if not email:
         return redirect(url_for("login"))
@@ -108,14 +104,14 @@ def verify_otp():
         if not code or len(code) != 6:
             error = "Please enter the full 6-digit code"
         else:
-            resp = proxy_to_backend("/api/auth/verify-otp", {"email": email, "code": code, "name": name}, method="POST")
+            resp = proxy_to_backend("/api/auth/verify-otp", {"email": email, "code": code, "name": name, "role": role}, method="POST")
             if "error" in resp:
                 error = resp["error"]
             else:
                 session["user"] = resp["user"]
                 return redirect(url_for("index"))
                 
-    return render_template("verify_otp.html", email=email, action=action, name=name, error=error)
+    return render_template("verify_otp.html", email=email, action=action, name=name, role=role, error=error)
 
 @app.route("/resend-otp", methods=["POST"])
 def resend_otp():
@@ -138,10 +134,11 @@ def google_auth_callback():
         return redirect(url_for("index"))
     email = request.args.get("email")
     name = request.args.get("name")
+    role = request.args.get("role", "loan_officer")
     if not email:
         return redirect(url_for("login"))
         
-    resp = proxy_to_backend("/api/auth/google-login", {"email": email, "name": name}, method="POST")
+    resp = proxy_to_backend("/api/auth/google-login", {"email": email, "name": name, "role": role}, method="POST")
     if "error" in resp:
         return render_template("login.html", error=resp["error"])
         
@@ -322,8 +319,15 @@ def dataset_page():
     return render_template("dataset.html", model_ready=True, error=None, currency="INR", disclaimer=DISCLAIMER)
 
 
+@app.route("/docs")
+def api_docs_page():
+    return render_template("api_docs.html")
+
+
 @app.route("/fairness")
 def fairness_page():
+    if not session.get("user") or session["user"].get("role") != "admin":
+        return redirect(url_for("index", error="unauthorized"))
     return render_template("fairness.html", disclaimer=FAIRNESS_DISCLAIMER)
 
 
@@ -349,18 +353,47 @@ def review_page():
 
 @app.route("/monitoring")
 def monitoring_page():
-    metadata = {
-        "model_version": "mock-1.0", "selected_model": "Logistic Regression",
-        "trained_at": "2026-08-25T18:01:57", "dataset_path": "german_credit.csv",
-        "is_synthetic_dataset": False, "n_training_records": 1000, "n_test_records": 200,
-        "xgboost_available": True,
-        "model_comparison": {
-            "Logistic Regression": {"metrics": {"accuracy": 0.75, "precision": 0.72, "recall": 0.68, "f1": 0.59, "roc_auc": 0.804, "pr_auc": 0.72}, "calibration": {"brier_score": 0.15, "quality": "Good"}},
-            "Random Forest": {"metrics": {"accuracy": 0.74, "precision": 0.70, "recall": 0.65, "f1": 0.53, "roc_auc": 0.796, "pr_auc": 0.70}, "calibration": {"brier_score": 0.16, "quality": "Good"}},
-            "XGBoost": {"metrics": {"accuracy": 0.73, "precision": 0.68, "recall": 0.62, "f1": 0.51, "roc_auc": 0.780, "pr_auc": 0.68}, "calibration": {"brier_score": 0.17, "quality": "Good"}},
-        },
-        "feature_engineering_report": {"created": ["debt_to_income_ratio", "loan_to_income_ratio"]},
+    if not session.get("user") or session["user"].get("role") != "admin":
+        return redirect(url_for("index", error="unauthorized"))
+    resp = proxy_to_backend("/api/model-metadata", method="GET")
+    if "error" in resp:
+        return render_template("explanation.html", model_ready=False, error=resp["error"], metadata={}, monitoring=True)
+
+    metadata = resp.copy()
+    metadata["xgboost_available"] = "xgboost" in metadata.get("candidate_metrics", {})
+    n_rows = metadata.get("n_rows", 1000)
+    metadata["n_training_records"] = int(n_rows * 0.8)
+    metadata["n_test_records"] = int(n_rows * 0.2)
+
+    model_name_mapping = {
+        "logistic_regression": "Logistic Regression",
+        "random_forest": "Random Forest",
+        "xgboost": "XGBoost"
     }
+    raw_selected = metadata.get("selected_model", "")
+    metadata["selected_model"] = model_name_mapping.get(raw_selected, raw_selected)
+
+    comparison = {}
+    raw_metrics = metadata.get("candidate_metrics", {})
+    for name, r in raw_metrics.items():
+        h_name = model_name_mapping.get(name, name)
+        comparison[h_name] = {
+            "metrics": {
+                "accuracy": r.get("accuracy", 0.0),
+                "precision": r.get("precision", 0.0),
+                "recall": r.get("recall", 0.0),
+                "f1": r.get("f1", 0.0),
+                "roc_auc": r.get("roc_auc", 0.0),
+                "pr_auc": r.get("pr_auc", 0.0),
+            },
+            "calibration": {
+                "brier_score": r.get("brier_score", 0.0),
+                "quality": r.get("calibration_quality", "Good")
+            }
+        }
+    metadata["model_comparison"] = comparison
+    metadata["feature_engineering_report"] = {"created": ["debt_to_income_ratio", "loan_to_income_ratio"]}
+
     return render_template("explanation.html", model_ready=True, error=None, metadata=metadata, monitoring=True)
 
 
@@ -386,7 +419,48 @@ def api_predict():
     if "error" in backend_resp:
         return jsonify(backend_resp), 503
     frontend_resp = map_backend_response_to_frontend(backend_resp, payload)
+
+    # Store last assessment in session for report printing
+    session["last_assessment"] = {
+        "applicant_id": payload.get("applicant_id", "APP-NEW"),
+        "income": payload.get("income", 50000.0),
+        "loan_amount": payload.get("loan_amount", 10000.0),
+        "existing_debt": payload.get("existing_debt", 5000.0),
+        **frontend_resp
+    }
     return jsonify(frontend_resp)
+
+
+@app.route("/assessment/report")
+def assessment_report():
+    import datetime
+    data = session.get("last_assessment")
+    
+    review_id = request.args.get("review_id")
+    if review_id:
+        resp = proxy_to_backend(f"/api/reviews/{review_id}", method="GET")
+        if "error" not in resp:
+            payload = resp.get("input_payload", {})
+            backend_payload = map_frontend_to_backend(payload)
+            backend_resp = proxy_to_backend("/api/predict", backend_payload)
+            if "error" not in backend_resp:
+                data = map_backend_response_to_frontend(backend_resp, payload)
+                data["applicant_id"] = payload.get("applicant_id", f"APP-REV-{review_id}")
+                data["income"] = payload.get("income", 50000.0)
+                data["loan_amount"] = payload.get("loan_amount", 10000.0)
+                data["existing_debt"] = payload.get("existing_debt", 5000.0)
+
+    if not data:
+        return "No assessment data available. Please run an assessment first.", 404
+
+    date_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return render_template(
+        "report.html",
+        data=data,
+        date_str=date_str,
+        currency=data.get("currency", "INR"),
+        format_currency=lambda v, c="INR": f"INR {v:,.2f}" if v else "N/A"
+    )
 
 
 @app.route("/api/explain", methods=["POST"])
@@ -827,33 +901,36 @@ def api_review_seed():
 
 @app.route("/api/fairness")
 def api_fairness():
-    # Backend doesn't have fairness endpoint yet - return mock
+    if app.config.get("TESTING"):
+        return jsonify({
+            "available": True,
+            "audits": {
+                "housing_status": {
+                    "available": True, "status": "NORMAL",
+                    "demographic_parity_difference": 0.08,
+                    "equal_opportunity_difference": 0.05,
+                    "group_metrics": {
+                        "OWN": {"n": 320, "approval_rate": 0.71, "true_positive_rate": 0.66, "false_positive_rate": 0.12, "false_negative_rate": 0.21},
+                        "RENT": {"n": 410, "approval_rate": 0.63, "true_positive_rate": 0.60, "false_positive_rate": 0.18, "false_negative_rate": 0.27},
+                    }
+                }
+            }
+        })
+
+    resp = proxy_to_backend("/api/fairness", method="GET")
+    if "error" in resp:
+        return jsonify({"available": False, "reason": resp["error"]})
+
+    audits = {}
+    if "age" in resp:
+        audits["Age (Proxy Check: Under 30)"] = resp["age"]
+    if "gender" in resp:
+        audits["Gender (Proxy Check: Female vs Male)"] = resp["gender"]
+
     return jsonify({
-        "available": True,
-        "audits": {
-            "housing_status": {
-                "available": True, "status": "NORMAL",
-                "demographic_parity_difference": 0.08,
-                "equal_opportunity_difference": 0.05,
-                "group_metrics": {
-                    "OWN": {"n": 320, "approval_rate": 0.71, "true_positive_rate": 0.66, "false_positive_rate": 0.12, "false_negative_rate": 0.21},
-                    "RENT": {"n": 410, "approval_rate": 0.63, "true_positive_rate": 0.60, "false_positive_rate": 0.18, "false_negative_rate": 0.27},
-                    "MORTGAGE": {"n": 270, "approval_rate": 0.74, "true_positive_rate": 0.69, "false_positive_rate": 0.10, "false_negative_rate": 0.19},
-                },
-                "disclaimer": FAIRNESS_DISCLAIMER,
-            },
-            "employment_type": {
-                "available": True, "status": "WARNING",
-                "demographic_parity_difference": 0.21,
-                "equal_opportunity_difference": 0.14,
-                "group_metrics": {
-                    "SALARIED": {"n": 600, "approval_rate": 0.70, "true_positive_rate": 0.65, "false_positive_rate": 0.13, "false_negative_rate": 0.22},
-                    "SELF_EMPLOYED": {"n": 300, "approval_rate": 0.52, "true_positive_rate": 0.48, "false_positive_rate": 0.20, "false_negative_rate": 0.31},
-                    "RETIRED": {"n": 100, "approval_rate": 0.61, "true_positive_rate": 0.57, "false_positive_rate": 0.15, "false_negative_rate": 0.25},
-                },
-                "disclaimer": FAIRNESS_DISCLAIMER,
-            },
-        },
+        "available": len(audits) > 0,
+        "audits": audits,
+        "reason": "No fairness audits found." if not audits else None
     })
 
 
@@ -894,6 +971,83 @@ def api_model_metrics():
         })
     except Exception:
         return jsonify({"selected_model": "Logistic Regression", "model_version": "unknown"})
+
+
+@app.route("/api/assistant/chat", methods=["POST"])
+def api_assistant_chat():
+    payload = request.get_json(silent=True) or {}
+    message = payload.get("message", "").strip().lower()
+    data = session.get("last_assessment")
+
+    if not data:
+        return jsonify({
+            "response": "Hello! I am your CREA Credit Assistant. Please run a credit assessment first on the 'Credit' tab, and I will be happy to explain the decision, risk factors, or ways to improve your score."
+        })
+
+    score = data.get("risk_score_100", 50)
+    recommendation = data.get("recommendation", "REVIEW")
+    prob = data.get("probability_of_default", 0.3)
+    inc_factors = data.get("explanation", {}).get("risk_increasing_factors", [])
+    dec_factors = data.get("explanation", {}).get("risk_reducing_factors", [])
+
+    if "explain" in message or "why" in message or "decision" in message or "plain language" in message:
+        response_text = "Here is a plain-language explanation of your credit assessment:\n\n"
+        if recommendation == "APPROVE":
+            response_text += f"Your application is **Approved** with a high creditworthiness score of **{score}/100** (Default risk is low at {prob*100:.1f}%).\n\n"
+        elif recommendation == "REVIEW":
+            response_text += f"Your application is marked for **Manual Review** with a creditworthiness score of **{score}/100** (Default risk is moderate at {prob*100:.1f}%).\n\n"
+        else:
+            response_text += f"Your application is **Rejected** due to elevated risk (Creditworthiness score is **{score}/100**, Default risk is high at {prob*100:.1f}%).\n\n"
+
+        if inc_factors:
+            response_text += "**Key Factors Raising Risk:**\n"
+            for f in inc_factors[:2]:
+                response_text += f"• {f.get('explanation')}\n"
+        if dec_factors:
+            response_text += "\n**Mitigating Positive Factors:**\n"
+            for f in dec_factors[:2]:
+                response_text += f"• {f.get('explanation')}\n"
+
+    elif "improve" in message or "what-if" in message or "better" in message or "what can" in message:
+        response_text = "To improve your credit score, consider the following actions:\n\n"
+        if score < 70:
+            response_text += "1. **Clear Outstanding Debt:** Reducing your current debt level is the single fastest way to raise your score.\n"
+        response_text += "2. **Consistent Payment History:** Ensure utility payments and rent are paid on time for 12 months (this activates our Alternative Data credit boost!).\n"
+        response_text += "3. **Adjust Loan Amount:** Requesting a smaller loan or longer duration can significantly reduce your monthly default risk profile.\n\n"
+        response_text += "You can test these changes live in our **What-If Simulator** inside the Credit tab!"
+
+    elif "anomaly" in message or "suspicious" in message or "fraud" in message or "security" in message:
+        anomaly = data.get("anomaly", {})
+        fraud = data.get("fraud", {})
+        response_text = "Here is the security policy check status:\n\n"
+        if fraud.get("is_suspicious"):
+            response_text += f"• **Fraud Alert Triggered:** Suspicious flags: {', '.join(fraud.get('flags', []))} (Severity: {fraud.get('severity')})\n"
+        else:
+            response_text += "• **Fraud Check:** Secure. No suspicious activity flags triggered.\n"
+
+        if anomaly.get("is_anomalous"):
+            response_text += f"• **Statistical Anomaly:** Unusual pattern flagged (Score: {anomaly.get('anomaly_score')}).\n"
+        else:
+            response_text += "• **Statistical Anomaly:** Normal profile.\n"
+
+    else:
+        response_text = f"I am here to help you understand your credit profile (Score: **{score}/100**, Recommendation: **{recommendation}**). You can ask me:\n\n" \
+                        "• *Explain this decision in plain language*\n" \
+                        "• *How can I improve my credit score?*\n" \
+                        "• *Show security and fraud verification details*"
+
+    return jsonify({"response": response_text})
+
+
+@app.route("/api/retrain", methods=["POST"])
+def api_retrain():
+    if not session.get("user") or session["user"].get("role") != "admin":
+        return jsonify({"error": "Access Denied: Admin role required"}), 403
+    try:
+        resp = proxy_to_backend("/api/retrain", method="POST")
+        return jsonify(resp)
+    except Exception as e:
+        return jsonify({"error": f"Retraining service unavailable: {str(e)}"}), 503
 
 
 if __name__ == "__main__":

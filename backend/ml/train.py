@@ -21,7 +21,15 @@ import numpy as np
 import pandas as pd
 from sklearn.ensemble import IsolationForest, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import f1_score, roc_auc_score
+from sklearn.metrics import (
+    accuracy_score,
+    precision_score,
+    recall_score,
+    f1_score,
+    roc_auc_score,
+    average_precision_score,
+    brier_score_loss,
+)
 from sklearn.model_selection import train_test_split
 
 from .preprocessing import build_preprocessor
@@ -80,6 +88,82 @@ def build_candidates():
     return candidates
 
 
+def calculate_group_metrics(groups: dict, y_true: pd.Series, y_pred: np.ndarray) -> dict:
+    group_results = {}
+    for group_name, mask in groups.items():
+        g_true = y_true[mask].to_numpy()
+        g_pred = y_pred[mask]
+        n = int(len(g_true))
+        if n == 0:
+            continue
+        n_approved = int(np.sum(g_pred == 0))
+        approval_rate = round(n_approved / n, 4)
+        
+        tp = int(np.sum((g_true == 0) & (g_pred == 0)))
+        fp = int(np.sum((g_true == 1) & (g_pred == 0)))
+        fn = int(np.sum((g_true == 0) & (g_pred == 1)))
+        tn = int(np.sum((g_true == 1) & (g_pred == 1)))
+        
+        actual_good = tp + fn
+        tpr = round(tp / actual_good, 4) if actual_good > 0 else 0.0
+        actual_bad = fp + tn
+        fpr = round(fp / actual_bad, 4) if actual_bad > 0 else 0.0
+        fnr = round(fn / actual_good, 4) if actual_good > 0 else 0.0
+        
+        group_results[group_name] = {
+            "n": n,
+            "approval_rate": approval_rate,
+            "true_positive_rate": tpr,
+            "false_positive_rate": fpr,
+            "false_negative_rate": fnr,
+        }
+        
+    keys = list(group_results.keys())
+    if len(keys) == 2:
+        g1, g2 = keys[0], keys[1]
+        dp_diff = round(abs(group_results[g1]["approval_rate"] - group_results[g2]["approval_rate"]), 4)
+        eo_diff = round(abs(group_results[g1]["true_positive_rate"] - group_results[g2]["true_positive_rate"]), 4)
+    else:
+        dp_diff = 0.0
+        eo_diff = 0.0
+        
+    status = "NORMAL"
+    if dp_diff > 0.15 or eo_diff > 0.10:
+        status = "WARNING"
+    if dp_diff > 0.25 or eo_diff > 0.20:
+        status = "ALERT"
+        
+    return {
+        "available": True,
+        "status": status,
+        "demographic_parity_difference": dp_diff,
+        "equal_opportunity_difference": eo_diff,
+        "group_metrics": group_results,
+        "disclaimer": "Fairness metrics are monitoring indicators calculated on the validation test set."
+    }
+
+
+def compute_fairness_audit(X_test: pd.DataFrame, y_test: pd.Series, pred: np.ndarray) -> dict:
+    audits = {}
+    if "age" in X_test.columns:
+        is_young = X_test["age"] < 30
+        groups = {
+            "Young (Age < 30)": is_young,
+            "Older (Age >= 30)": ~is_young
+        }
+        audits["age"] = calculate_group_metrics(groups, y_test, pred)
+        
+    if "personal_status" in X_test.columns:
+        is_female = X_test["personal_status"].astype(str).str.contains("female", case=False)
+        groups = {
+            "Female": is_female,
+            "Male": ~is_female
+        }
+        audits["gender"] = calculate_group_metrics(groups, y_test, pred)
+        
+    return audits
+
+
 def main():
     parser = argparse.ArgumentParser(description="Train credit-risk artifacts")
     parser.add_argument("--data", type=Path,
@@ -110,9 +194,25 @@ def main():
         model.fit(X_train_p, y_train)
         proba = model.predict_proba(X_test_p)[:, 1]
         pred = (proba >= 0.5).astype(int)
+        
+        acc = round(float(accuracy_score(y_test, pred)), 4)
+        prec = round(float(precision_score(y_test, pred, zero_division=0)), 4)
+        rec = round(float(recall_score(y_test, pred, zero_division=0)), 4)
+        f1 = round(float(f1_score(y_test, pred, zero_division=0)), 4)
+        auc = round(float(roc_auc_score(y_test, proba)), 4)
+        pr_auc = round(float(average_precision_score(y_test, proba)), 4)
+        brier = round(float(brier_score_loss(y_test, proba)), 4)
+        calibration_quality = "Good" if brier <= 0.15 else ("Fair" if brier <= 0.20 else "Poor")
+        
         metrics = {
-            "roc_auc": round(float(roc_auc_score(y_test, proba)), 4),
-            "f1": round(float(f1_score(y_test, pred)), 4),
+            "accuracy": acc,
+            "precision": prec,
+            "recall": rec,
+            "f1": f1,
+            "roc_auc": auc,
+            "pr_auc": pr_auc,
+            "brier_score": brier,
+            "calibration_quality": calibration_quality
         }
         results[name] = metrics
         fitted[name] = model
@@ -121,6 +221,11 @@ def main():
     best_name = max(results, key=lambda n: (results[n]["roc_auc"], results[n]["f1"]))
     best_model = fitted[best_name]
     print(f"[model] selected: {best_name}")
+
+    # Compute fairness audit using the best model's predictions
+    best_proba = best_model.predict_proba(X_test_p)[:, 1]
+    best_pred = (best_proba >= 0.5).astype(int)
+    fairness_report = compute_fairness_audit(X_test, y_test, best_pred)
 
     anomaly_model = IsolationForest(
         contamination=CONTAMINATION, random_state=RANDOM_STATE, n_estimators=200,
@@ -143,6 +248,7 @@ def main():
         "numeric_columns": numeric_cols,
         "categorical_columns": categorical_cols,
         "candidate_metrics": results,
+        "fairness_audit": fairness_report,
         "contamination": CONTAMINATION,
         "random_state": RANDOM_STATE,
         "python": platform.python_version(),

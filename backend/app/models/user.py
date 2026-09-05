@@ -9,6 +9,7 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     name = db.Column(db.String(120), nullable=True)
     password_hash = db.Column(db.String(256), nullable=True)
+    role = db.Column(db.String(32), nullable=False, default="loan_officer")
     created_at = db.Column(
         db.DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
@@ -28,6 +29,7 @@ class User(db.Model):
             "id": self.id,
             "email": self.email,
             "name": self.name,
+            "role": self.role,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 

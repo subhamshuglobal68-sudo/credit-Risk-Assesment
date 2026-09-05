@@ -27,6 +27,8 @@ def client():
     flask_app.config["TESTING"] = True
     flask_app.config["SECRET_KEY"] = "test"
     with flask_app.test_client() as c:
+        with c.session_transaction() as sess:
+            sess["user"] = {"email": "admin@crea.ai", "name": "Admin User", "role": "admin"}
         yield c
 
 
@@ -98,11 +100,15 @@ class TestMockApis:
 
 class TestAuthRoutes:
     def test_login_page_renders(self, client):
+        with client.session_transaction() as sess:
+            sess.pop("user", None)
         resp = client.get("/login")
         assert resp.status_code == 200
         assert b"Log in" in resp.data
 
     def test_register_page_renders(self, client):
+        with client.session_transaction() as sess:
+            sess.pop("user", None)
         resp = client.get("/register")
         assert resp.status_code == 200
         assert b"Create an account" in resp.data

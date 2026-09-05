@@ -2,7 +2,7 @@
 {% block title %}New Assessment — CreditGuard AI{% endblock %}
 {% block breadcrumb %}New Assessment{% endblock %}
 {% block content %}
-<header class="page-header">
+<header class="page-header" style="--bg-text: 'ASSESSMENT';">
   <h1>Borrower Credit Risk Assessment</h1>
   <p class="muted">{{ disclaimer }}</p>
 </header>
@@ -27,8 +27,12 @@
   <h2>CREDIT RISK ASSESSMENT</h2>
   <div class="result-grid">
     <div class="result-block">
-      <div class="result-label">Risk Score</div>
-      <div class="result-value" id="res-score">— / 1000</div>
+      <div class="result-label">Creditworthiness Score</div>
+      <div class="result-value" id="res-score">— / 100</div>
+    </div>
+    <div class="result-block">
+      <div class="result-label">Default Risk Score</div>
+      <div class="result-value" id="res-default-risk-score">— / 100</div>
     </div>
     <div class="result-block">
       <div class="result-label">Probability of Default</div>
@@ -52,19 +56,15 @@
   <h3>WHY?</h3>
   <ul id="res-reasons" class="reason-list"></ul>
 
-  <h3>RESPONSIBLE AI</h3>
-  <div class="responsible-grid">
-    <div class="responsible-item">
-      <span class="responsible-label">Anomaly</span>
+  <h3>SECURITY &amp; POLICY FLAGS</h3>
+  <div class="responsible-grid" style="grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 20px;">
+    <div class="responsible-item" style="background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
+      <span class="responsible-label" style="font-size: 11px; text-transform: uppercase; color: var(--muted);">Fraud Verification</span>
+      <span id="res-fraud-status" class="badge">—</span>
+    </div>
+    <div class="responsible-item" style="background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
+      <span class="responsible-label" style="font-size: 11px; text-transform: uppercase; color: var(--muted);">Statistical Anomaly</span>
       <span id="res-anomaly" class="badge">—</span>
-    </div>
-    <div class="responsible-item">
-      <span class="responsible-label">Fairness</span>
-      <span class="badge">See Fairness Audit page</span>
-    </div>
-    <div class="responsible-item">
-      <span class="responsible-label">Stability</span>
-      <span class="badge">See Stability page</span>
     </div>
   </div>
 
@@ -73,6 +73,7 @@
   <div class="action-row">
     <button id="btn-explain" class="btn">VIEW EXPLANATION</button>
     <button id="btn-scenario" class="btn">RUN WHAT-IF SCENARIO</button>
+    <button id="btn-report" class="btn btn-primary">GENERATE PDF REPORT</button>
     <button id="btn-reset" class="btn">NEW ASSESSMENT</button>
   </div>
   <p class="muted small">{{ disclaimer }}</p>

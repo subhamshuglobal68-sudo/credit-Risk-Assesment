@@ -78,6 +78,16 @@ def create_app(config_object=None) -> Flask:
     # never alters existing ones, so it preserves the audit trail.
     with app.app_context():
         db.create_all()
+        try:
+            db.session.execute(db.text("SELECT role FROM users LIMIT 1"))
+        except Exception:
+            db.session.rollback()
+            try:
+                db.session.execute(db.text("ALTER TABLE users ADD COLUMN role VARCHAR(32) DEFAULT 'loan_officer'"))
+                db.session.commit()
+                logger.info("Added role column to users table.")
+            except Exception as exc:
+                logger.error("Failed to add role column: %s", exc)
 
     # Load ML artifacts once, eagerly, at startup. Risk banding thresholds
     # travel with the registry so services never read Flask config directly.

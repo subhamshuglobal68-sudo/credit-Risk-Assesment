@@ -42,6 +42,12 @@ def get_review_reasons(applicant: dict, risk_category: str, is_anomalous: bool) 
     """Generate human-readable reasons why this application was flagged."""
     reasons = []
 
+    from .fraud import check_fraud
+    fraud_res = check_fraud(applicant)
+    if fraud_res["is_suspicious"]:
+        for flag in fraud_res["fraud_flags"]:
+            reasons.append(f"CRITICAL SECURITY ALERT: {flag} (Fraud Severity: {fraud_res['fraud_severity']})")
+
     if risk_category == "High":
         reasons.append("High risk classification (probability of default > 66%)")
     elif risk_category == "Medium":
@@ -122,19 +128,16 @@ def create_review_from_audit(audit_row: AuditRecord) -> ReviewRecord | None:
 def auto_create_reviews() -> int:
     """Scan audit records and create review records for any that need one.
     Returns the number of new reviews created."""
-    # Find audit records that should have reviews (prediction type, not scenario).
-    flagged = (
-        AuditRecord.query
-        .filter_by(record_type="prediction")
-        .filter(
-            db.or_(
-                AuditRecord.risk_category == "High",
-                AuditRecord.risk_category == "Medium",
-                AuditRecord.is_anomalous == True,
-            )
-        )
-        .all()
-    )
+    all_predictions = AuditRecord.query.filter_by(record_type="prediction").all()
+
+    from .fraud import check_fraud
+    flagged = []
+    for audit_row in all_predictions:
+        payload = audit_row.input_payload or {}
+        if (audit_row.risk_category in ("High", "Medium") or 
+            audit_row.is_anomalous or 
+            check_fraud(payload).get("is_suspicious", False)):
+            flagged.append(audit_row)
 
     count = 0
     for audit_row in flagged:

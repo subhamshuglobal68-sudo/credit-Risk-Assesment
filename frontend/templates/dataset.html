@@ -2,7 +2,7 @@
 {% block title %}Upload Dataset — CreditGuard AI{% endblock %}
 {% block breadcrumb %}Batch Analysis{% endblock %}
 {% block content %}
-<header class="page-header">
+<header class="page-header" style="--bg-text: 'DATASET';">
   <h1>Batch Dataset Assessment</h1>
   <p class="muted">Upload a tabular dataset to score every application with the trained model.</p>
 </header>
@@ -24,7 +24,10 @@
 </section>
 
 <section id="dataset-summary" class="panel hidden">
-  <h2 id="dataset-title">Results</h2>
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+    <h2 id="dataset-title" style="margin: 0;">Results</h2>
+    <button id="download-batch-report" class="btn btn-primary" type="button">DOWNLOAD REPORT (CSV)</button>
+  </div>
   <div class="batch-total">Total applications: <strong id="batch-total-count">0</strong></div>
   <p class="muted">Select a category to view applications. The counts use the final decision returned by the existing model decision engine.</p>
   <div id="category-buttons" class="category-selector" aria-label="Result categories"></div>

@@ -10,58 +10,19 @@ def generate_otp():
     return f"{random.randint(100000, 999999)}"
 
 def send_otp_email(email, code):
+    # 1. Print to console stdout
     print("\n" + "="*50)
-    print(f"📧 EMAIL SENT TO: {email}")
+    print(f"[EMAIL] SENT TO: {email}")
     print(f"One-Time verification code: {code}")
     print("This code expires in 10 minutes.")
     print("="*50 + "\n")
     
+    # 2. Save to local file in workspace
     try:
         with open(r"c:\Users\subha\Downloads\credit-risk\otp_code.txt", "w") as f:
             f.write(f"EMAIL: {email}\nOTP_CODE: {code}\nSENT_AT: {datetime.now().isoformat()}\n")
     except Exception as e:
         print(f"Failed to write OTP code to file: {e}")
-
-@auth_bp.route("/register", methods=["POST"])
-def register():
-    data = request.get_json() or {}
-    email = data.get("email")
-    password = data.get("password")
-    name = data.get("name")
-    
-    if not email or not password:
-        return jsonify({"error": "Email and password are required"}), 400
-        
-    try:
-        if User.query.filter_by(email=email).first():
-            return jsonify({"error": "User already exists"}), 400
-            
-        user = User(email=email, name=name)
-        user.set_password(password)
-        db.session.add(user)
-        db.session.commit()
-        return jsonify({"message": "Registration successful", "user": user.to_dict()}), 201
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": f"Database error: {str(e)}"}), 500
-
-@auth_bp.route("/login", methods=["POST"])
-def login():
-    data = request.get_json() or {}
-    email = data.get("email")
-    password = data.get("password")
-    
-    if not email or not password:
-        return jsonify({"error": "Email and password are required"}), 400
-        
-    try:
-        user = User.query.filter_by(email=email).first()
-        if not user or not user.check_password(password):
-            return jsonify({"error": "Invalid email or password"}), 401
-            
-        return jsonify({"message": "Login successful", "user": user.to_dict()}), 200
-    except Exception as e:
-        return jsonify({"error": f"Database error: {str(e)}"}), 500
 
 @auth_bp.route("/send-otp", methods=["POST"])
 def send_otp():
@@ -71,6 +32,7 @@ def send_otp():
         return jsonify({"error": "Email is required"}), 400
     
     try:
+        # Clean old codes for this email
         OTPCode.query.filter_by(email=email).delete()
         
         code = generate_otp()
@@ -96,10 +58,12 @@ def verify_otp():
     if not email or not code:
         return jsonify({"error": "Email and verification code are required"}), 400
     
+    # Check OTP database
     otp_entry = OTPCode.query.filter_by(email=email, code=code).first()
     if not otp_entry:
         return jsonify({"error": "Invalid verification code"}), 400
     
+    # Check expiry
     now = datetime.now(timezone.utc)
     expires_at = otp_entry.expires_at
     if expires_at.tzinfo is None:
@@ -111,14 +75,20 @@ def verify_otp():
         return jsonify({"error": "Verification code has expired"}), 400
     
     try:
+        # Delete the OTP code
         db.session.delete(otp_entry)
         
+        # Find or create user
+        role = data.get("role", "loan_officer")
         user = User.query.filter_by(email=email).first()
         if not user:
-            user = User(email=email, name=name)
+            user = User(email=email, name=name, role=role)
             db.session.add(user)
-        elif name:
-            user.name = name
+        else:
+            if name:
+                user.name = name
+            if "role" in data:
+                user.role = role
             
         db.session.commit()
         return jsonify({"message": "Verification successful", "user": user.to_dict()}), 200
@@ -131,6 +101,7 @@ def google_login():
     data = request.get_json() or {}
     email = data.get("email")
     name = data.get("name")
+    role = data.get("role", "loan_officer")
     
     if not email:
         return jsonify({"error": "Email is required"}), 400
@@ -138,10 +109,13 @@ def google_login():
     try:
         user = User.query.filter_by(email=email).first()
         if not user:
-            user = User(email=email, name=name)
+            user = User(email=email, name=name, role=role)
             db.session.add(user)
-        elif name:
-            user.name = name
+        else:
+            if name:
+                user.name = name
+            if "role" in data:
+                user.role = role
             
         db.session.commit()
         return jsonify({"message": "OAuth login successful", "user": user.to_dict()}), 200

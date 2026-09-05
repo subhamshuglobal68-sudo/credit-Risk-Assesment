@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Developer API — CREA AI{% endblock %}
+{% block content %}
+<header class="page-header" style="--bg-text: 'DEV';">
+  <h1>API Integration Docs</h1>
+  <p class="muted">Integrate CREA AI credit scoring, fraud alerts, and explainability features directly into your core banking services.</p>
+</header>
+
+<section class="panel">
+  <h2>Service Endpoint</h2>
+  <p>The CREA scoring service exposes a RESTful POST endpoint that accepts raw applicant profiles, performs sanity checks, runs anomaly and fraud detection, and returns risk assessments.</p>
+  <div style="background:var(--panel-2); border:1px solid var(--border); border-radius:6px; padding:12px; font-family:monospace; font-size:14px; margin:16px 0;">
+    <span style="background:var(--teal); color:white; padding:2px 8px; border-radius:4px; font-weight:700; margin-right:8px;">POST</span>
+    <span>http://127.0.0.1:5000/api/predict</span>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Request Payload Structure</h2>
+  <p>Submit applicant characteristics using a flat JSON object. Alternate indicators are optional, but activate automated creditworthiness boosts if provided.</p>
+  
+  <pre style="background:#0f172a; color:#f8fafc; padding:16px; border-radius:8px; overflow-x:auto; font-size:13px; line-height:1.5;">{
+  "applicant_id": "APP-9831A",
+  "age": 34,
+  "job": "skilled employee",
+  "income": 85000.00,
+  "loan_amount": 25000.00,
+  "existing_debt": 5200.00,
+  "rent_on_time": "On Time (Last 12 Months)", // Optional alternative data
+  "utility_on_time": "On Time (Last 12 Months)", // Optional alternative data
+  "recharge_consistency": "Consistent Monthly Recharge", // Optional alternative data
+  "currency": "INR"
+}</pre>
+</section>
+
+<section class="panel">
+  <h2>Integration Code Snippets</h2>
+  <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:16px; margin:20px 0;">
+    <div style="background:var(--panel-2); border:1px solid var(--border); border-radius:8px; padding:16px;">
+      <h3 style="margin-top:0; font-size:14px; text-transform:uppercase; color:var(--teal)">cURL</h3>
+      <pre style="background:#0f172a; color:#f8fafc; padding:10px; border-radius:4px; font-size:11px; overflow-x:auto;">curl -X POST http://127.0.0.1:5000/api/predict \
+  -H "Content-Type: application/json" \
+  -d '{
+    "applicant_id": "APP-981",
+    "age": 34,
+    "income": 85000,
+    "loan_amount": 20000,
+    "existing_debt": 3000
+  }'</pre>
+    </div>
+
+    <div style="background:var(--panel-2); border:1px solid var(--border); border-radius:8px; padding:16px;">
+      <h3 style="margin-top:0; font-size:14px; text-transform:uppercase; color:var(--teal)">Python (requests)</h3>
+      <pre style="background:#0f172a; color:#f8fafc; padding:10px; border-radius:4px; font-size:11px; overflow-x:auto;">import requests
+
+url = "http://127.0.0.1:5000/api/predict"
+payload = {
+    "applicant_id": "APP-981",
+    "age": 34,
+    "income": 85000,
+    "loan_amount": 20000,
+    "existing_debt": 3000
+}
+resp = requests.post(url, json=payload).json()
+print("Score:", resp["risk_score"])</pre>
+    </div>
+
+    <div style="background:var(--panel-2); border:1px solid var(--border); border-radius:8px; padding:16px;">
+      <h3 style="margin-top:0; font-size:14px; text-transform:uppercase; color:var(--teal)">JavaScript (fetch)</h3>
+      <pre style="background:#0f172a; color:#f8fafc; padding:10px; border-radius:4px; font-size:11px; overflow-x:auto;">const payload = {
+  applicant_id: "APP-981",
+  age: 34,
+  income: 85000,
+  loan_amount: 20000,
+  existing_debt: 3000
+};
+
+fetch('http://127.0.0.1:5000/api/predict', {
+  method: 'POST',
+  headers: {'Content-Type': 'application/json'},
+  body: JSON.stringify(payload)
+})
+.then(res => res.json())
+.then(data => console.log(data));</pre>
+    </div>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Response Schema Definitions</h2>
+  <table class="data-table">
+    <thead>
+      <tr><th>Field Key</th><th>Data Type</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>risk_score</code></td><td>Integer</td><td>The 0-1000 credit score value mapped from default probability bounds.</td></tr>
+      <tr><td><code>risk_score_100</code></td><td>Integer</td><td>0-100 creditworthiness score (100 is best, 0 is worst).</td></tr>
+      <tr><td><code>default_risk_score_100</code></td><td>Integer</td><td>0-100 probability metric (100 is worst, 0 is best).</td></tr>
+      <tr><td><code>probability_of_default</code></td><td>Float</td><td>Raw statistical output (0.0 to 1.0) returned from target ML model.</td></tr>
+      <tr><td><code>risk_category</code></td><td>String</td><td>Evaluated category: <code>LOW</code>, <code>MEDIUM</code>, or <code>HIGH</code>.</td></tr>
+      <tr><td><code>recommendation</code></td><td>String</td><td>Policy recommendation: <code>APPROVE</code>, <code>REVIEW</code>, or <code>REJECT</code>.</td></tr>
+      <tr><td><code>fraud.is_suspicious</code></td><td>Boolean</td><td>True if logical red flags (income inflation, etc.) are triggered.</td></tr>
+      <tr><td><code>anomaly.is_anomalous</code></td><td>Boolean</td><td>True if isolation forest identifies applicant as population outlier.</td></tr>
+    </tbody>
+  </table>
+</section>
+{% endblock %}

@@ -23,3 +23,7 @@ Thumbs.db
 **/instance/
 **/*.db
 **/.env
+
+# Runtime logs and temporary files
+*.err
+otp_code.txt

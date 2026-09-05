@@ -96,6 +96,10 @@ function smoothScrollTo(el) {
     themeToggle?.setAttribute('aria-pressed', dark ? 'true' : 'false');
     themeToggle?.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
     localStorage.setItem(THEME_KEY, dark ? 'dark' : 'light');
+    const themeText = themeToggle?.querySelector('.theme-text');
+    if (themeText) {
+      themeText.textContent = dark ? 'LIGHT' : 'DARK';
+    }
   }
 
   function initTheme() {

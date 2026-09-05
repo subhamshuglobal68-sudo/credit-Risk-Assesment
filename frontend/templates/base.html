@@ -14,7 +14,7 @@
   <aside class="sidebar" id="sidebar" aria-label="Sidebar navigation">
     <div class="sidebar-header">
       <div class="brand">
-        <img src="{{ url_for('static', filename='img/logo.jpg') }}" alt="CREA AI Logo" class="brand-icon" style="object-fit: cover;">
+        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="CREA AI Logo" class="brand-icon" style="object-fit: contain;">
         <div class="brand-text">
           <div class="brand-title">CREA AI</div>
           <div class="brand-sub">Credit Intelligence</div>
@@ -34,13 +34,18 @@
       <a href="{{ url_for('index') }}" class="nav-link{% if request.endpoint == 'index' %} active{% endif %}" data-tooltip="Overview"{% if request.endpoint == 'index' %} aria-current="page"{% endif %}><span class="material-symbols-outlined">dashboard</span><span class="nav-label">Overview</span></a>
       <a href="{{ url_for('assessment') }}" class="nav-link{% if request.endpoint in ['assessment', 'scenario_page'] %} active{% endif %}" data-tooltip="Credit"{% if request.endpoint in ['assessment', 'scenario_page'] %} aria-current="page"{% endif %}><span class="material-symbols-outlined">payments</span><span class="nav-label">Credit</span></a>
       <a href="{{ url_for('dataset_page') }}" class="nav-link{% if request.endpoint in ['dataset_page', 'anomaly_page'] %} active{% endif %}" data-tooltip="Data"{% if request.endpoint in ['dataset_page', 'anomaly_page'] %} aria-current="page"{% endif %}><span class="material-symbols-outlined">database</span><span class="nav-label">Data</span></a>
+      {% if session.get('user') and session['user'].get('role') == 'admin' %}
       <a href="{{ url_for('fairness_page') }}" class="nav-link{% if request.endpoint == 'fairness_page' %} active{% endif %}" data-tooltip="Responsible AI"{% if request.endpoint == 'fairness_page' %} aria-current="page"{% endif %}><span class="material-symbols-outlined">verified_user</span><span class="nav-label">Responsible AI</span></a>
+      {% endif %}
       <a href="{{ url_for('review_page') }}" class="nav-link{% if request.endpoint == 'review_page' %} active{% endif %}" data-tooltip="Review Center"{% if request.endpoint == 'review_page' %} aria-current="page"{% endif %}><span class="material-symbols-outlined">fact_check</span><span class="nav-label">Review Center</span></a>
+      {% if session.get('user') and session['user'].get('role') == 'admin' %}
       <a href="{{ url_for('monitoring_page') }}" class="nav-link{% if request.endpoint in ['monitoring_page', 'stability_page'] %} active{% endif %}" data-tooltip="Model"{% if request.endpoint in ['monitoring_page', 'stability_page'] %} aria-current="page"{% endif %}><span class="material-symbols-outlined">analytics</span><span class="nav-label">Model</span></a>
+      {% endif %}
     </nav>
     <nav class="nav nav-secondary" aria-label="Secondary navigation">
+      <a href="{{ url_for('api_docs_page') }}" class="nav-link{% if request.endpoint == 'api_docs_page' %} active{% endif %}" data-tooltip="API Docs"{% if request.endpoint == 'api_docs_page' %} aria-current="page"{% endif %}><span class="material-symbols-outlined">terminal</span><span class="nav-label">API Docs</span></a>
       <a href="{{ url_for('settings_page') }}" class="nav-link{% if request.endpoint == 'settings_page' %} active{% endif %}" data-tooltip="Settings"{% if request.endpoint == 'settings_page' %} aria-current="page"{% endif %}><span class="material-symbols-outlined">settings</span><span class="nav-label">Settings</span></a>
-      <a href="#" class="nav-link" data-tooltip="Support"><span class="material-symbols-outlined">help</span><span class="nav-label">Support</span></a>
+      <a href="{{ url_for('logout') }}" class="nav-link" data-tooltip="Logout"><span class="material-symbols-outlined">logout</span><span class="nav-label">Logout</span></a>
     </nav>
     <div class="sidebar-footer">
       <p>Prototype — decision support only. Not a real banking approval system.</p>
@@ -50,20 +55,37 @@
     <button class="menu-button" id="mobile-menu" aria-label="Open menu"><span class="material-symbols-outlined">menu</span></button>
     <div class="breadcrumb">Credit <span class="material-symbols-outlined">chevron_right</span><strong>{% block breadcrumb %}Overview{% endblock %}</strong></div>
     <div class="topbar-tools">
+      <!-- Search Box -->
       <div class="search-box">
         <span class="material-symbols-outlined">search</span>
         <input placeholder="Search..." aria-label="Search">
       </div>
-      <button class="icon-button theme-toggle" id="theme-toggle" aria-label="Switch to dark mode" aria-pressed="false">
+
+      <!-- Notification Bell -->
+      <button class="topbar-btn notifications-btn" aria-label="Notifications">
+        <span class="material-symbols-outlined">notifications</span>
+        <span class="notif-dot"></span>
+      </button>
+
+      <!-- Theme Toggle -->
+      <button class="topbar-btn theme-toggle" id="theme-toggle" aria-label="Switch theme">
         <span class="material-symbols-outlined theme-icon-light">light_mode</span>
         <span class="material-symbols-outlined theme-icon-dark" hidden>dark_mode</span>
+        <span class="theme-text">DARK</span>
       </button>
-      <button class="icon-button" aria-label="Notifications"><span class="material-symbols-outlined">notifications</span></button>
-      <button class="icon-button" aria-label="History"><span class="material-symbols-outlined">history</span></button>
-      <div class="user-menu">
-        <span class="avatar" id="user-avatar-btn">
+
+      <!-- User Capsule Widget -->
+      <div class="user-capsule" id="user-avatar-btn">
+        <span class="avatar">
           {{ (session['user'].get('name', '')[0] if session['user'].get('name') else session['user']['email'][0]) | upper if (session.get('user') and session['user'].get('email')) else 'U' }}
         </span>
+        <div class="user-details">
+          <div class="user-name">
+            {{ session['user']['name'] if (session.get('user') and session['user'].get('name')) else 'Kiran Kumar Nayak' }}
+          </div>
+          <div class="user-role">{{ (session['user'].get('role', 'loan_officer') | replace('_', ' ')) | upper if session.get('user') else 'LOAN OFFICER' }}</div>
+        </div>
+        
         <div class="user-dropdown" id="user-dropdown-menu">
           {% if session.get('user') and session['user'].get('name') %}
           <div class="user-dropdown-name" style="font-weight: 600; padding: 12px 16px 4px; color: var(--text);">
@@ -83,6 +105,11 @@
           </a>
         </div>
       </div>
+
+      <!-- Logout Direct Button -->
+      <a class="topbar-btn logout-btn" href="{{ url_for('logout') }}" aria-label="Sign out">
+        <span class="material-symbols-outlined">logout</span>
+      </a>
     </div>
   </header>
   <main class="content">
@@ -92,24 +119,19 @@
 <div class="sidebar-overlay" id="sidebar-overlay"></div>
 <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
   const avatarBtn = document.getElementById('user-avatar-btn');
   const dropdownMenu = document.getElementById('user-dropdown-menu');
   if (avatarBtn && dropdownMenu) {
-    avatarBtn.addEventListener('click', function(e) {
+    avatarBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      const isHidden = window.getComputedStyle(dropdownMenu).display === 'none';
-      dropdownMenu.style.display = isHidden ? 'block' : 'none';
+      dropdownMenu.classList.toggle('active');
     });
-    document.addEventListener('click', function() {
-      dropdownMenu.style.display = 'none';
-    });
-    dropdownMenu.addEventListener('click', function(e) {
-      e.stopPropagation();
+    document.addEventListener('click', () => {
+      dropdownMenu.classList.remove('active');
     });
   }
-});
 </script>
+<script src="{{ url_for('static', filename='js/assistant.js') }}"></script>
 {% block scripts %}{% endblock %}
 </body>
 </html>

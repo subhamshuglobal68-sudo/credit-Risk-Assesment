@@ -46,6 +46,21 @@ class ApplicantSchema(Schema):
     foreign_worker = fields.String()
     num_dependents = fields.Integer()
 
+    # Raw input fields for fraud checks and audit logging
+    income = fields.Float(allow_none=True)
+    existing_debt = fields.Float(allow_none=True)
+    loan_amount = fields.Float(allow_none=True)
+    rent_on_time = fields.String(allow_none=True)
+    utility_on_time = fields.String(allow_none=True)
+    recharge_consistency = fields.String(allow_none=True)
+    credit_history_years = fields.Float(allow_none=True)
+    employment_duration_years = fields.Float(allow_none=True)
+    num_open_accounts = fields.Integer(allow_none=True)
+    late_payments_last_2y = fields.Integer(allow_none=True)
+    housing_status = fields.String(allow_none=True)
+    employment_type = fields.String(allow_none=True)
+    currency = fields.String(allow_none=True)
+
 
 class BatchPredictSchema(Schema):
     """Validate a list of applicant payloads for batch scoring. Rows that

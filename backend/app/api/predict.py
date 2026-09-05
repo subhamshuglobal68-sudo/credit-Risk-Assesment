@@ -53,6 +53,9 @@ def predict():
         "anomaly": result["anomaly"],
         "anomaly_score": result.get("anomaly_score"),
         "explanation": result["explanation"],
+        "is_suspicious": result.get("is_suspicious", False),
+        "fraud_flags": result.get("fraud_flags", []),
+        "fraud_severity": result.get("fraud_severity", 0.0),
         "model_version": result["model_version"],
     }), 200
 
@@ -120,3 +123,60 @@ def batch_predict():
         "errors": errors,
         "results": results,
     }), 200
+
+
+@predict_bp.get("/model-metadata")
+def get_model_metadata():
+    unavailable = _model_unavailable_response()
+    if unavailable:
+        return unavailable
+    registry = ModelRegistry.get()
+    return jsonify(registry.metadata), 200
+
+
+@predict_bp.get("/fairness")
+def get_fairness_audit():
+    unavailable = _model_unavailable_response()
+    if unavailable:
+        return unavailable
+    registry = ModelRegistry.get()
+    fairness = registry.metadata.get("fairness_audit", {})
+    return jsonify(fairness), 200
+
+
+@predict_bp.post("/retrain")
+def retrain_model():
+    import subprocess
+    import sys
+    from pathlib import Path
+    from flask import current_app
+    
+    try:
+        python_bin = sys.executable
+        cwd_dir = Path(current_app.root_path).parent
+        
+        result = subprocess.run(
+            [python_bin, "-m", "ml.train"],
+            cwd=str(cwd_dir),
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        
+        # Reload Model Registry
+        ModelRegistry.reset()
+        ModelRegistry.load(
+            current_app.config["MODEL_DIR"],
+            risk_low_threshold=current_app.config["RISK_LOW_THRESHOLD"],
+            risk_high_threshold=current_app.config["RISK_HIGH_THRESHOLD"],
+        )
+        
+        return jsonify({
+            "success": True,
+            "message": "Model retrained successfully and registry reloaded.",
+            "output": result.stdout,
+            "model_version": ModelRegistry.get().version
+        }), 200
+    except Exception as exc:
+        logger.exception("Failed to retrain model")
+        return jsonify({"error": f"Retraining failed: {str(exc)}"}), 500

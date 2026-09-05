@@ -55,12 +55,7 @@
   .brand-logo .logo-icon {
     width: 36px;
     height: 36px;
-    background: var(--text);
-    border-radius: 50%;
-    display: grid;
-    place-items: center;
-    color: #fff;
-    font-size: 18px;
+    object-fit: contain;
   }
 
   .brand-logo .logo-name {
@@ -113,6 +108,8 @@
 
   .otp-box {
     flex: 1;
+    width: 100%;
+    min-width: 0;
     height: 56px;
     text-align: center;
     font-size: 24px;
@@ -206,7 +203,7 @@
 
 <div class="topbar">
   <a href="/" class="brand-logo">
-    <div class="logo-icon">⚡</div>
+    <img src="{{ url_for('static', filename='img/logo.png') }}" class="logo-icon" alt="CREA AI Logo">
     <span class="logo-name">CREA AI</span>
   </a>
 </div>

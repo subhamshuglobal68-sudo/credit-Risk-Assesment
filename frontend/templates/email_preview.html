@@ -54,12 +54,7 @@
   .brand-logo .logo-icon {
     width: 36px;
     height: 36px;
-    background: var(--text);
-    border-radius: 50%;
-    display: grid;
-    place-items: center;
-    color: #fff;
-    font-size: 18px;
+    object-fit: contain;
   }
 
   .brand-logo .logo-name {
@@ -86,7 +81,9 @@
   }
 
   .email-badge {
-    font-size: 28px;
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
     margin-bottom: 24px;
   }
 
@@ -170,14 +167,14 @@
 
 <div class="topbar">
   <a href="/" class="brand-logo">
-    <div class="logo-icon">⚡</div>
+    <img src="{{ url_for('static', filename='img/logo.png') }}" class="logo-icon" alt="CREA AI Logo">
     <span class="logo-name">CREA AI</span>
   </a>
 </div>
 
 <div class="page-center">
   <div class="email-card">
-    <div class="email-badge">⚡</div>
+    <img src="{{ url_for('static', filename='img/logo.png') }}" class="email-badge" alt="CREA AI Logo">
     <h2 class="email-title">Sign in to app</h2>
     <p class="email-sub">You requested to sign in to <strong>CREA AI</strong>. Your one-time code is:</p>
 
