@@ -43,7 +43,7 @@
       {% endif %}
     </nav>
     <nav class="nav nav-secondary" aria-label="Secondary navigation">
-      <a href="{{ url_for('api_docs_page') }}" class="nav-link{% if request.endpoint == 'api_docs_page' %} active{% endif %}" data-tooltip="API Docs"{% if request.endpoint == 'api_docs_page' %} aria-current="page"{% endif %}><span class="material-symbols-outlined">terminal</span><span class="nav-label">API Docs</span></a>
+      <a href="{{ url_for('auth_center_page') }}" class="nav-link{% if request.endpoint == 'auth_center_page' %} active{% endif %}" data-tooltip="Security & Auth"{% if request.endpoint == 'auth_center_page' %} aria-current="page"{% endif %}><span class="material-symbols-outlined">security</span><span class="nav-label">Security & Auth</span></a>
       <a href="{{ url_for('settings_page') }}" class="nav-link{% if request.endpoint == 'settings_page' %} active{% endif %}" data-tooltip="Settings"{% if request.endpoint == 'settings_page' %} aria-current="page"{% endif %}><span class="material-symbols-outlined">settings</span><span class="nav-label">Settings</span></a>
       <a href="{{ url_for('logout') }}" class="nav-link" data-tooltip="Logout"><span class="material-symbols-outlined">logout</span><span class="nav-label">Logout</span></a>
     </nav>

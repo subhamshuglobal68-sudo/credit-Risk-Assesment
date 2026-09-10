@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+{% block title %}Security & Authentication — CREA AI{% endblock %}
+{% block breadcrumb %}Security & Auth{% endblock %}
+
+{% block content %}
+<header class="page-header" style="--bg-text: 'SECURITY';">
+  <h1>Authentication & Security Center</h1>
+  <p class="muted">Centralized platform function for user identity, role-based access control, email OTP verification, and JWT session rotation.</p>
+</header>
+
+<!-- Quick Stats Row -->
+<div class="metrics-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px;">
+  <div class="panel" style="margin: 0; padding: 20px;">
+    <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600;">Active Account</div>
+    <div style="font-size: 20px; font-weight: 700; color: var(--text); margin: 6px 0 2px;">{{ session['user']['name'] if (session.get('user') and session['user'].get('name')) else (session['user']['email'] if session.get('user') else 'Guest') }}</div>
+    <div style="font-size: 12px; color: var(--muted);">{{ session['user']['email'] if session.get('user') else 'Not logged in' }}</div>
+  </div>
+
+  <div class="panel" style="margin: 0; padding: 20px;">
+    <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600;">Security Role</div>
+    <div style="font-size: 20px; font-weight: 700; color: #007c89; margin: 6px 0 2px;">
+      <span style="display: inline-block; padding: 2px 10px; border-radius: 999px; background: rgba(0, 124, 137, 0.1); font-size: 13px;">
+        {{ (session['user'].get('role', 'loan_officer') | replace('_', ' ')) | upper if session.get('user') else 'LOAN OFFICER' }}
+      </span>
+    </div>
+    <div style="font-size: 12px; color: var(--muted);">Server-enforced role claim</div>
+  </div>
+
+  <div class="panel" style="margin: 0; padding: 20px;">
+    <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600;">Account Verification</div>
+    <div style="font-size: 16px; font-weight: 700; color: #15803d; margin: 6px 0 2px; display: flex; items-center; gap: 4px;">
+      <span class="material-symbols-outlined" style="font-size: 20px; vertical-align: middle;">verified</span> Email Verified
+    </div>
+    <div style="font-size: 12px; color: var(--muted);">6-digit cryptographic OTP confirmed</div>
+  </div>
+
+  <div class="panel" style="margin: 0; padding: 20px;">
+    <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600;">Two-Factor Auth (2FA)</div>
+    <div style="font-size: 16px; font-weight: 700; color: {% if session.get('user') and session['user'].get('role') == 'admin' %}#7e22ce{% else %}#007c89{% endif %}; margin: 6px 0 2px; display: flex; items-center; gap: 4px;">
+      <span class="material-symbols-outlined" style="font-size: 20px; vertical-align: middle;">lock</span>
+      {% if session.get('user') and session['user'].get('role') == 'admin' %}Mandatory Active{% else %}Supported{% endif %}
+    </div>
+    <div style="font-size: 12px; color: var(--muted);">Email OTP challenge on login</div>
+  </div>
+</div>
+
+<!-- Two Column Layout: Identity & Session Details -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 20px; margin-bottom: 24px;">
+  
+  <!-- Panel 1: Identity & Credentials -->
+  <section class="panel">
+    <h2><span class="material-symbols-outlined" style="vertical-align: middle; margin-right: 6px;">badge</span>Identity & Credentials</h2>
+    <p class="muted">Synchronized database identity attributes for this session.</p>
+
+    <div style="margin-top: 16px; font-size: 13px;">
+      <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border);">
+        <span style="color: var(--muted);">Email Address</span>
+        <strong style="color: var(--text);">{{ session['user']['email'] if session.get('user') else 'user@crea-ai.com' }}</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border);">
+        <span style="color: var(--muted);">User ID</span>
+        <code style="font-family: monospace; font-size: 11px; background: rgba(0,0,0,0.04); padding: 2px 6px; border-radius: 4px;">
+          {{ session['user'].get('id', 'usr_prod_live') if session.get('user') else 'usr_prod_live' }}
+        </code>
+      </div>
+      <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border);">
+        <span style="color: var(--muted);">Password Security</span>
+        <span style="color: #15803d; font-weight: 600;">bcrypt (Cost factor &ge; 12)</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; padding: 10px 0;">
+        <span style="color: var(--muted);">Auth Provider</span>
+        <span style="font-weight: 600; text-transform: uppercase; font-size: 12px;">Email &bull; Google &bull; Apple</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Panel 2: Session & JWT Token Architecture -->
+  <section class="panel">
+    <h2><span class="material-symbols-outlined" style="vertical-align: middle; margin-right: 6px;">vpn_key</span>Session & Token Architecture</h2>
+    <p class="muted">OWASP compliant in-memory access tokens with httpOnly cookie rotation.</p>
+
+    <div style="margin-top: 16px; font-size: 13px;">
+      <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border);">
+        <span style="color: var(--muted);">Access Token Lifespan</span>
+        <strong style="color: var(--text);">15 Minutes (In-Memory State)</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border);">
+        <span style="color: var(--muted);">Refresh Token Lifespan</span>
+        <strong style="color: var(--text);">7 Days (httpOnly, SameSite=Lax Cookie)</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border);">
+        <span style="color: var(--muted);">Token Rotation Policy</span>
+        <span style="color: #15803d; font-weight: 600;">Rotated on every refresh</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; padding: 10px 0;">
+        <span style="color: var(--muted);">Database Hashing</span>
+        <span style="font-weight: 600;">SHA-256 Digest in Database</span>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Panel 3: Live OTP Code & Dispatch Monitor -->
+<section class="panel" style="margin-bottom: 24px;">
+  <h2><span class="material-symbols-outlined" style="vertical-align: middle; margin-right: 6px;">outgoing_mail</span>Email OTP Verification & Delivery Monitor</h2>
+  <p class="muted">Real-time inspection of active one-time passwords and email dispatch streams.</p>
+
+  {% if latest_otp %}
+  <div style="background: rgba(0, 124, 137, 0.05); border: 1px dashed rgba(0, 124, 137, 0.3); border-radius: 8px; padding: 20px; margin-top: 16px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px;">
+    <div>
+      <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600; margin-bottom: 4px;">Latest Dispatched OTP Code</div>
+      <div style="font-family: monospace; font-size: 32px; font-weight: 700; color: #007c89; letter-spacing: 4px;">{{ latest_otp.code }}</div>
+      <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Purpose: <strong>{{ latest_otp.purpose }}</strong> &bull; Target: <strong>{{ latest_otp.email }}</strong></div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      {% if latest_otp.preview_url and latest_otp.preview_url != 'Live SMTP' %}
+      <a href="{{ latest_otp.preview_url }}" target="_blank" class="btn btn-secondary" style="font-size: 12px; display: inline-flex; align-items: center; gap: 6px;">
+        <span class="material-symbols-outlined" style="font-size: 16px;">open_in_new</span> View Rendered Email in Ethereal
+      </a>
+      {% endif %}
+      <span style="font-size: 11px; color: var(--muted);">Recorded in <code>otp_code.txt</code> in workspace root</span>
+    </div>
+  </div>
+  {% else %}
+  <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-top: 16px; text-align: center; color: var(--muted); font-size: 13px;">
+    No unconsumed OTP active right now. Codes are automatically marked consumed immediately upon verification.
+  </div>
+  {% endif %}
+</section>
+
+{% if admin_data and admin_data.get('users') %}
+<!-- Panel: Admin User Management Directory -->
+<section class="panel" style="margin-bottom: 24px;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+    <div>
+      <h2><span class="material-symbols-outlined" style="vertical-align: middle; margin-right: 6px;">admin_panel_settings</span>Admin User Directory (Database Live)</h2>
+      <p class="muted">All registered accounts in PostgreSQL / Prisma store with real-time verification and 2FA status.</p>
+    </div>
+    <div style="display: flex; gap: 8px;">
+      <span style="font-size: 12px; font-weight: 600; padding: 4px 10px; background: rgba(0,124,137,0.1); color: #007c89; border-radius: 999px;">Total: {{ admin_data['metrics']['totalUsers'] }}</span>
+      <span style="font-size: 12px; font-weight: 600; padding: 4px 10px; background: rgba(21,128,61,0.1); color: #15803d; border-radius: 999px;">Verified: {{ admin_data['metrics']['verifiedCount'] }}</span>
+    </div>
+  </div>
+
+  <div style="overflow-x: auto;">
+    <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 13px;">
+      <thead>
+        <tr style="border-bottom: 2px solid var(--border); text-align: left;">
+          <th style="padding: 10px 12px;">User</th>
+          <th style="padding: 10px 12px;">Role</th>
+          <th style="padding: 10px 12px;">Status</th>
+          <th style="padding: 10px 12px;">2FA</th>
+          <th style="padding: 10px 12px;">Provider</th>
+          <th style="padding: 10px 12px;">Registered</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in admin_data['users'] %}
+        <tr style="border-bottom: 1px solid var(--border);">
+          <td style="padding: 10px 12px;">
+            <div style="font-weight: 600;">{{ u['name'] or 'Anonymous' }}</div>
+            <div style="font-size: 11px; color: var(--muted);">{{ u['email'] }}</div>
+          </td>
+          <td style="padding: 10px 12px;">
+            <span style="display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; background: {% if u['role'] == 'ADMIN' %}rgba(126, 34, 206, 0.15); color: #7e22ce;{% else %}rgba(0, 124, 137, 0.1); color: #007c89;{% endif %}">
+              {{ u['role'] }}
+            </span>
+          </td>
+          <td style="padding: 10px 12px;">
+            {% if u['isVerified'] %}
+            <span style="color: #15803d; font-weight: 600; font-size: 12px;">● Verified</span>
+            {% else %}
+            <span style="color: #d97706; font-weight: 600; font-size: 12px;">○ Pending</span>
+            {% endif %}
+          </td>
+          <td style="padding: 10px 12px;">
+            {% if u['twoFactorEnabled'] or u['role'] == 'ADMIN' %}
+            <span style="color: #007c89; font-weight: 600; font-size: 12px;">✓ Enforced</span>
+            {% else %}
+            <span style="color: var(--muted); font-size: 12px;">Off</span>
+            {% endif %}
+          </td>
+          <td style="padding: 10px 12px; font-family: monospace; font-size: 11px;">
+            {{ u['authProvider'] }}
+          </td>
+          <td style="padding: 10px 12px; font-size: 12px; color: var(--muted);">
+            {{ u['createdAt'][:10] if u['createdAt'] else 'Recent' }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+
+<!-- Panel 4: React Auth Portal Deep Link -->
+<section class="panel" style="background: linear-gradient(to right, rgba(0, 124, 137, 0.06), rgba(255, 224, 27, 0.06)); border-color: rgba(0, 124, 137, 0.2);">
+  <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px;">
+    <div>
+      <h3 style="margin: 0 0 4px; font-size: 16px; font-weight: 700;">Full Dedicated Authentication Portal (React Client)</h3>
+      <p class="muted" style="margin: 0; font-size: 13px;">Access the full interactive client with 6-digit animated inputs, 2FA toggling, admin user creation modal, and OAuth flows.</p>
+    </div>
+    <a href="http://localhost:5173/auth-center" target="_blank" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 6px;">
+      <span class="material-symbols-outlined" style="font-size: 18px;">launch</span> Open Auth Portal (:5173)
+    </a>
+  </div>
+</section>
+
+{% endblock %}

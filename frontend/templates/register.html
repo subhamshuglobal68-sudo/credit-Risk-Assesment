@@ -256,13 +256,11 @@
         <input class="field-input" type="email" id="email" name="email" required placeholder="Enter your Email" autocomplete="email">
       </div>
       <div class="field-group">
-        <label class="field-label" for="role">Role</label>
-        <select class="field-input" id="role" name="role" required style="width: 100%; height: 42px; border-radius: 4px; border: 1px solid #ccc; padding: 0 10px; font-size: 14px; background-color: #fff; outline: none;">
-          <option value="loan_officer">Loan Officer</option>
-          <option value="admin">Admin</option>
-        </select>
+        <label class="field-label" for="password">Password</label>
+        <input class="field-input" type="password" id="password" name="password" minlength="8" required placeholder="Min 8 characters (1 uppercase, 1 number)" autocomplete="new-password">
+        <p style="font-size: 11px; color: var(--muted); margin-top: 4px;">Must contain at least 8 characters with letters and numbers.</p>
       </div>
-      <button type="submit" class="btn-primary">Send email code</button>
+      <button type="submit" class="btn-primary" style="margin-top: 8px;">Create account</button>
     </form>
 
     <div class="divider">OR</div>

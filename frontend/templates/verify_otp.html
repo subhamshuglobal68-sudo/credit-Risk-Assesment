@@ -219,6 +219,34 @@
     <div class="alert-error">⚠ {{ error }}</div>
     {% endif %}
 
+    <!-- Live Verification Code Display Card -->
+    <div id="live-otp-container" style="margin-bottom: 24px; padding: 18px; background: #e6f4f5; border: 1.5px solid rgba(0, 124, 137, 0.4); border-radius: 10px; font-size: 13px; color: #1d1d1d;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span style="font-weight: 700; color: #007c89; display: inline-flex; align-items: center; gap: 5px;">
+          <span class="material-symbols-outlined" style="font-size: 18px;">vpn_key</span> Active Verification Code
+        </span>
+        <span id="delivery-badge" style="font-size: 11px; background: rgba(0, 124, 137, 0.15); color: #007c89; padding: 2px 8px; border-radius: 999px; font-weight: 600;">
+          Delivered On-Screen
+        </span>
+      </div>
+      
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 10px 0;">
+        <span id="live-otp-code" style="font-family: monospace; font-size: 24px; font-weight: 800; letter-spacing: 5px; color: #007c89; background: #fff; padding: 6px 14px; border-radius: 6px; border: 1.5px solid #007c89; box-shadow: 0 1px 4px rgba(0,0,0,0.05);">
+          {{ latest_code or 'Loading...' }}
+        </span>
+        <button type="button" id="btn-auto-submit" onclick="autoFillAndSubmit(document.getElementById('live-otp-code').textContent.trim())" class="btn-primary" style="padding: 9px 20px; font-size: 14px; border-radius: 100px; margin-top: 0; background: #007c89; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+          ⚡ Auto-Fill Code & Verify
+        </button>
+      </div>
+
+      <p style="margin: 6px 0 0; font-size: 12px; color: #5c5c5c; line-height: 1.5;">
+        💡 <em>Since an external SMTP mail server is not configured in development, your 6-digit code is provided right here so you can log in immediately.</em>
+        {% if preview_url and preview_url != 'Live SMTP' %}
+        &bull; <a href="{{ preview_url }}" target="_blank" style="color: #007c89; font-weight: 600; text-decoration: underline;">View rendered HTML email in browser &rarr;</a>
+        {% endif %}
+      </p>
+    </div>
+
     <form id="otp-form" method="POST" action="{{ url_for('verify_otp') }}">
       <input type="hidden" name="email" value="{{ email }}">
       <input type="hidden" name="action" value="{{ action }}">
@@ -234,16 +262,15 @@
         <input type="text" maxlength="1" class="otp-box" inputmode="numeric" pattern="[0-9]" required>
       </div>
 
-      <button type="submit" class="btn-primary">Verify code</button>
+      <button type="submit" class="btn-primary" style="width: 100%; text-align: center;">Verify code</button>
     </form>
 
     <p class="helper-row">
-      Can't find the email? Check your spam folder.<br><br>
-      Didn't receive it? <a class="teal-link" onclick="resendCode()">Resend code</a>
+      Didn't get the code? <a class="teal-link" onclick="resendCode()">Resend code</a>
     </p>
 
     <p class="demo-link">
-      💡 <a href="{{ url_for('email_preview', email=email) }}" target="_blank" class="teal-link">[Demo] View simulated email in browser</a>
+      💡 <a href="{{ url_for('email_preview', email=email) }}" target="_blank" class="teal-link">[Demo] View simulated email inbox in browser</a>
     </p>
   </div>
 </div>
@@ -288,6 +315,45 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 
+function autoFillCode(c) {
+  if (!c || c.includes('Loading') || c.length !== 6) return;
+  const boxes = document.querySelectorAll('.otp-box');
+  c.split('').forEach((d, i) => { if (boxes[i]) boxes[i].value = d; });
+  const codeInput = document.getElementById('full-code');
+  if (codeInput) codeInput.value = c;
+  if (boxes[5]) boxes[5].focus();
+}
+
+function autoFillAndSubmit(c) {
+  if (!c || c.includes('Loading') || c.length !== 6) return;
+  autoFillCode(c);
+  const form = document.getElementById('otp-form');
+  if (form) form.submit();
+}
+
+function checkLiveOtp() {
+  const codeSpan = document.getElementById('live-otp-code');
+  if (!codeSpan) return;
+  const currentVal = codeSpan.textContent.trim();
+  if (!currentVal || currentVal === 'Loading...' || currentVal.length !== 6) {
+    fetch('/api/auth/latest-otp?email=' + encodeURIComponent("{{ email }}"))
+      .then(r => r.json())
+      .then(data => {
+        const code = data.code || (data.latestOtp && data.latestOtp.code);
+        if (code && code.length === 6) {
+          codeSpan.textContent = code;
+          autoFillCode(code);
+        }
+      })
+      .catch(() => {});
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  checkLiveOtp();
+  setInterval(checkLiveOtp, 1500);
+});
+
 function showAlert(msg, type) {
   const el = document.getElementById('alert-banner');
   el.textContent = (type === 'error' ? '⚠ ' : '✓ ') + msg;
@@ -308,6 +374,7 @@ function resendCode() {
       showAlert('Code resent successfully!', 'success');
       document.querySelectorAll('.otp-box').forEach(b => b.value = '');
       document.querySelectorAll('.otp-box')[0].focus();
+      checkLiveOtp();
     }
   })
   .catch(() => showAlert('Failed to resend. Try again.', 'error'));

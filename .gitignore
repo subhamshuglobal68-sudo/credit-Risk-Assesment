@@ -1,3 +1,19 @@
+# Node.js & NPM dependencies
+node_modules/
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build outputs
+dist/
+**/dist/
+build/
+**/build/
+.next/
+.vite/
+
 # Virtual environments
 venv/
 .venv/
@@ -14,6 +30,7 @@ env/
 **/.pytest_cache/
 **/*.egg-info/
 **/*.log
+*.log
 
 # Operating System files
 .DS_Store
@@ -22,8 +39,24 @@ Thumbs.db
 # Flask instances & Databases
 **/instance/
 **/*.db
+**/*.db-journal
+**/*.sqlite
+**/*.sqlite3
+*.db
+server/prisma/dev.db
+
+# Environment files
 **/.env
+**/.env.local
+**/.env.*.local
+.env
+.env.local
 
 # Runtime logs and temporary files
 *.err
+backend.err
+frontend.err
+backend.log
+frontend.log
 otp_code.txt
+

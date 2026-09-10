@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --teal: #007c89;
+  --teal-dark: #006570;
+  --teal-light: #e6f4f5;
+  --yellow-strip: #ffe01b;
+}
+
+/* Mailchimp-inspired left accent bar */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 5px;
+  height: 100%;
+  background: var(--yellow-strip);
+  z-index: 999;
+}
+
+/* Remove spin buttons from number inputs */
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+  -webkit-appearance: none; 
+  margin: 0; 
+}

@@ -1,0 +1,65 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Provider {
+  EMAIL
+  GOOGLE
+  APPLE
+}
+
+model User {
+  id                String         @id @default(uuid())
+  email             String         @unique
+  name              String?
+  passwordHash      String?
+  role              Role           @default(USER)
+  isVerified        Boolean        @default(false)
+  twoFactorEnabled  Boolean        @default(false)
+  authProvider      Provider       @default(EMAIL)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  otps              Otp[]
+  refreshTokens     RefreshToken[]
+
+  @@map("users")
+}
+
+model Otp {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash  String
+  purpose   String   // SIGNUP_VERIFY, LOGIN_2FA, PASSWORD_RESET
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  consumed  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, purpose])
+  @@map("otps")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("refresh_tokens")
+}
