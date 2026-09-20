@@ -74,7 +74,7 @@ export default function AuthCenter() {
 
   // Load user directory for admins
   const loadAdminDirectory = async () => {
-    if (!isAdmin || !isSupabaseConfigured) return;
+    if (!isAdmin || !isConfigured) return;
     setLoadingAdminUsers(true);
     try {
       const { data, error } = await supabase

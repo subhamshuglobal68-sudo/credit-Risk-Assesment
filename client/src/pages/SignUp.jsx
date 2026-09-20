@@ -33,6 +33,12 @@ export default function SignUp() {
     setIsSubmitting(true);
     try {
       const data = await signUp(email, password, name);
+      if (data?.isDemo) {
+        const target = data.user?.role === 'admin' ? '/admin' : '/dashboard';
+        navigate(target, { replace: true });
+        return;
+      }
+
       // Supabase sends a confirmation email with a 6-digit OTP when configured with {{ .Token }}
       navigate('/verify-otp', {
         state: {
