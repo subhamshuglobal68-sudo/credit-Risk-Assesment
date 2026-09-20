@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { AlertCircle, ArrowRight, Sparkles, KeyRound, Mail } from 'lucide-react';
+import { AlertCircle, ArrowRight, Sparkles, KeyRound, Mail, Database } from 'lucide-react';
+import SupabaseConnectModal from '../components/SupabaseConnectModal';
 
 export default function Login() {
   const [authMode, setAuthMode] = useState('password'); // 'password' | 'otp'
@@ -9,8 +10,9 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showConnectModal, setShowConnectModal] = useState(false);
 
-  const { signInWithPassword, signInWithOtp, signInWithOAuth, isConfigured } = useAuth();
+  const { signInWithPassword, signInWithOtp, signInWithOAuth, isConfigured, loginAsDemo } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -86,6 +88,11 @@ export default function Login() {
 
   return (
     <div className="min-h-[calc(100vh-80px)] flex flex-col justify-center items-center px-4 py-12">
+      <SupabaseConnectModal
+        isOpen={showConnectModal}
+        onClose={() => setShowConnectModal(false)}
+      />
+
       {/* Auth Card matching signature CREA AI Mailchimp/Teal theme */}
       <div className="w-full max-w-[540px] bg-white rounded-xl p-8 sm:p-12 border border-[#e0e0e0] shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
         <h1 className="font-serif text-4xl sm:text-[42px] font-bold text-[#1d1d1d] leading-tight mb-3">
@@ -99,12 +106,51 @@ export default function Login() {
         </p>
 
         {!isConfigured && (
-          <div className="mb-6 p-4 bg-amber-50 border border-amber-200 text-amber-900 text-xs rounded-lg space-y-1">
-            <strong className="block font-semibold">⚡ Supabase Project Setup Required</strong>
-            <span>
-              Add your <code className="bg-white px-1 py-0.5 rounded border border-amber-300">VITE_SUPABASE_URL</code> and{' '}
-              <code className="bg-white px-1 py-0.5 rounded border border-amber-300">VITE_SUPABASE_ANON_KEY</code> to <code className="bg-white px-1 py-0.5 rounded border border-amber-300">client/.env</code> to connect directly to your live Supabase project.
-            </span>
+          <div className="mb-6 p-4 bg-teal-50/80 border border-teal-200 rounded-xl space-y-2.5">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <div className="flex items-center gap-1.5 font-bold text-xs text-teal-900">
+                  <Database className="w-3.5 h-3.5 text-[#007c89]" />
+                  <span>Connect Supabase Project</span>
+                </div>
+                <p className="text-[11px] text-teal-800 mt-0.5">
+                  Link your live database directly in this browser or explore immediately in Sandbox Demo.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowConnectModal(true)}
+                className="px-2.5 py-1 bg-[#007c89] hover:bg-[#006570] text-white text-[11px] font-bold rounded-md shadow-xs transition-colors whitespace-nowrap cursor-pointer"
+              >
+                Connect Keys
+              </button>
+            </div>
+            <div className="pt-2 border-t border-teal-200/60 flex items-center justify-between text-[11px]">
+              <span className="text-stone-500">Want to test right now?</span>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    loginAsDemo('user');
+                    navigate('/dashboard');
+                  }}
+                  className="text-[#007c89] font-bold hover:underline cursor-pointer"
+                >
+                  Demo User &rarr;
+                </button>
+                <span className="text-stone-300">|</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    loginAsDemo('admin');
+                    navigate('/admin');
+                  }}
+                  className="text-[#007c89] font-bold hover:underline cursor-pointer"
+                >
+                  Demo Admin &rarr;
+                </button>
+              </div>
+            </div>
           </div>
         )}
 

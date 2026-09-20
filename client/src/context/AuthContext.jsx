@@ -1,5 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
+import {
+  supabase,
+  isSupabaseConfigured as initialIsConfigured,
+  getSupabaseConfig,
+  saveClientCredentials,
+  clearClientCredentials,
+} from '../lib/supabaseClient';
 
 const AuthContext = createContext(null);
 
@@ -9,10 +15,58 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isConfigured, setIsConfigured] = useState(initialIsConfigured);
+
+  // 1-Click Sandbox Demo Access (allows immediate access without credentials)
+  const loginAsDemo = useCallback((targetRole = 'user') => {
+    const role = targetRole === 'admin' ? 'admin' : 'user';
+    const demoUser = {
+      id: role === 'admin' ? 'demo-admin-id' : 'demo-user-id',
+      email: role === 'admin' ? 'admin@crea-ai.internal' : 'demo@crea-ai.internal',
+      name: role === 'admin' ? 'CREA AI Administrator' : 'CREA AI Demo User',
+      role,
+      isDemo: true,
+      profile: {
+        id: role === 'admin' ? 'demo-admin-id' : 'demo-user-id',
+        email: role === 'admin' ? 'admin@crea-ai.internal' : 'demo@crea-ai.internal',
+        full_name: role === 'admin' ? 'CREA AI Administrator' : 'CREA AI Demo User',
+        role,
+      },
+    };
+
+    try {
+      localStorage.setItem('CREA_DEMO_USER', JSON.stringify(demoUser));
+    } catch (e) {}
+
+    setUser(demoUser);
+    setProfile(demoUser.profile);
+    setIsLoading(false);
+    return demoUser;
+  }, []);
+
+  // Save dynamic Supabase credentials from browser UI
+  const saveCredentials = useCallback((url, key) => {
+    const res = saveClientCredentials(url, key);
+    setIsConfigured(res.isSupabaseConfigured);
+
+    if (res.isConfigured) {
+      try {
+        localStorage.removeItem('CREA_DEMO_USER');
+      } catch (e) {}
+
+      supabase.auth.getSession().then(({ data: { session: s } }) => {
+        setSession(s);
+        if (s?.user) {
+          fetchProfile(s.user.id);
+        }
+      });
+    }
+    return res;
+  }, []);
 
   // Fetch or sync the profile from public.profiles
   const fetchProfile = useCallback(async (userId, retryCount = 0) => {
-    if (!userId || !isSupabaseConfigured) {
+    if (!userId || !isConfigured) {
       setIsLoading(false);
       return null;
     }
@@ -53,14 +107,25 @@ export function AuthProvider({ children }) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isConfigured]);
 
   // Initialize and listen to Supabase auth state changes
   useEffect(() => {
     let mounted = true;
 
     async function initSession() {
-      if (!isSupabaseConfigured) {
+      // 1. Check if demo session is stored
+      let storedDemo = null;
+      try {
+        const raw = localStorage.getItem('CREA_DEMO_USER');
+        if (raw) storedDemo = JSON.parse(raw);
+      } catch (e) {}
+
+      if (!isConfigured) {
+        if (storedDemo && mounted) {
+          setUser(storedDemo);
+          setProfile(storedDemo.profile);
+        }
         setIsLoading(false);
         return;
       }
@@ -79,6 +144,10 @@ export function AuthProvider({ children }) {
               role: 'user', // will be updated by fetchProfile
             });
             await fetchProfile(initialSession.user.id);
+          } else if (storedDemo) {
+            setUser(storedDemo);
+            setProfile(storedDemo.profile);
+            setIsLoading(false);
           } else {
             setUser(null);
             setProfile(null);
@@ -88,6 +157,10 @@ export function AuthProvider({ children }) {
       } catch (err) {
         console.error('[Supabase Auth] Error initializing session:', err);
         if (mounted) {
+          if (storedDemo) {
+            setUser(storedDemo);
+            setProfile(storedDemo.profile);
+          }
           setIsLoading(false);
         }
       }
@@ -110,8 +183,19 @@ export function AuthProvider({ children }) {
         }));
         await fetchProfile(currentSession.user.id);
       } else {
-        setUser(null);
-        setProfile(null);
+        let storedDemo = null;
+        try {
+          const raw = localStorage.getItem('CREA_DEMO_USER');
+          if (raw) storedDemo = JSON.parse(raw);
+        } catch (e) {}
+
+        if (storedDemo) {
+          setUser(storedDemo);
+          setProfile(storedDemo.profile);
+        } else {
+          setUser(null);
+          setProfile(null);
+        }
         setIsLoading(false);
       }
     });
@@ -120,7 +204,7 @@ export function AuthProvider({ children }) {
       mounted = false;
       subscription?.unsubscribe();
     };
-  }, [fetchProfile]);
+  }, [fetchProfile, isConfigured]);
 
   // 1. Password Login
   const signInWithPassword = async (email, password) => {
@@ -326,6 +410,9 @@ export function AuthProvider({ children }) {
   // 9. Sign Out
   const logout = async () => {
     try {
+      localStorage.removeItem('CREA_DEMO_USER');
+    } catch (e) {}
+    try {
       await supabase.auth.signOut();
     } catch (err) {
       console.warn('Sign out warning:', err);
@@ -399,7 +486,7 @@ export function AuthProvider({ children }) {
         profile,
         isLoading,
         error,
-        isConfigured: isSupabaseConfigured,
+        isConfigured,
         // Supabase Auth APIs
         signInWithPassword,
         signInWithOtp,
@@ -412,6 +499,9 @@ export function AuthProvider({ children }) {
         logout,
         inviteOrPromoteAdmin,
         fetchProfile,
+        // In-Browser Dynamic Config & Sandbox Demo
+        loginAsDemo,
+        saveCredentials,
         // Aliases
         login,
         signup,

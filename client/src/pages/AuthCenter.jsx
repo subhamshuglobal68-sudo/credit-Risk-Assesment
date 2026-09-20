@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
+import { supabase } from '../lib/supabaseClient';
 import {
   ShieldCheck,
   ShieldAlert,
@@ -21,9 +21,11 @@ import {
   Database,
   Code
 } from 'lucide-react';
+import SupabaseConnectModal from '../components/SupabaseConnectModal';
 
 export default function AuthCenter() {
   const { user, session, profile, resetPassword, inviteOrPromoteAdmin, fetchProfile, isConfigured } = useAuth();
+  const [showConnectModal, setShowConnectModal] = useState(false);
 
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'tokens' | 'admin' | 'password' | 'setup'
   const [copiedToken, setCopiedToken] = useState(false);
@@ -215,15 +217,28 @@ export default function AuthCenter() {
         </div>
       </div>
 
+      <SupabaseConnectModal
+        isOpen={showConnectModal}
+        onClose={() => setShowConnectModal(false)}
+      />
+
       {!isConfigured && (
-        <div className="mb-8 p-5 bg-amber-50 border border-amber-200 text-amber-900 rounded-2xl flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-          <div className="text-xs space-y-1">
-            <p className="font-bold text-sm">Supabase Credentials Not Yet Configured in client/.env</p>
-            <p>
-              To execute live queries and real OTP emails against your Supabase project, set <code className="bg-white px-1 py-0.5 rounded border border-amber-300">VITE_SUPABASE_URL</code> and <code className="bg-white px-1 py-0.5 rounded border border-amber-300">VITE_SUPABASE_ANON_KEY</code>.
-            </p>
+        <div className="mb-8 p-5 bg-teal-50 border border-teal-200 text-teal-950 rounded-2xl flex items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <Database className="w-5 h-5 text-[#007c89] shrink-0 mt-0.5" />
+            <div className="text-xs space-y-1">
+              <p className="font-bold text-sm">Supabase Project Not Linked</p>
+              <p>
+                To synchronize real user authentication, tokens, and database records, connect your live Supabase project credentials.
+              </p>
+            </div>
           </div>
+          <button
+            onClick={() => setShowConnectModal(true)}
+            className="px-4 py-2 bg-[#007c89] hover:bg-[#006570] text-white text-xs font-bold rounded-lg transition-colors whitespace-nowrap cursor-pointer shadow-xs"
+          >
+            Connect Supabase
+          </button>
         </div>
       )}
 

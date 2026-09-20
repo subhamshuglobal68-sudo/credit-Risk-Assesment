@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
-import { ShieldCheck, UserPlus, Users, CheckCircle, AlertCircle, X, RefreshCw, ArrowUpRight, Lock, UserCheck } from 'lucide-react';
+import { supabase } from '../lib/supabaseClient';
+import { ShieldCheck, UserPlus, Users, CheckCircle, AlertCircle, X, RefreshCw, ArrowUpRight, Lock, UserCheck, Database } from 'lucide-react';
+import SupabaseConnectModal from '../components/SupabaseConnectModal';
 
 export default function AdminDashboard() {
-  const { user, inviteOrPromoteAdmin } = useAuth();
+  const { user, inviteOrPromoteAdmin, isConfigured } = useAuth();
 
   const [users, setUsers] = useState([]);
   const [metrics, setMetrics] = useState({ totalUsers: 0, adminCount: 0, userCount: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showConnectModal, setShowConnectModal] = useState(false);
 
   // Modal State for Inviting / Promoting Admins
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -24,7 +26,14 @@ export default function AdminDashboard() {
     setIsLoading(true);
     setError(null);
 
-    if (!isSupabaseConfigured) {
+    if (!isConfigured || user?.isDemo) {
+      const mockList = [
+        { id: '1', email: 'admin@crea-ai.internal', full_name: 'Lead Risk Officer', role: 'admin', created_at: new Date().toISOString() },
+        { id: '2', email: 'analyst@crea-ai.internal', full_name: 'Senior Credit Analyst', role: 'user', created_at: new Date(Date.now() - 86400000).toISOString() },
+        { id: '3', email: 'compliance@crea-ai.internal', full_name: 'Compliance Officer', role: 'user', created_at: new Date(Date.now() - 172800000).toISOString() },
+      ];
+      setUsers(mockList);
+      setMetrics({ totalUsers: mockList.length, adminCount: 1, userCount: 2 });
       setIsLoading(false);
       return;
     }
@@ -140,13 +149,28 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {!isSupabaseConfigured && (
-        <div className="mb-6 p-4 bg-amber-50 border border-amber-200 text-amber-900 text-xs rounded-lg space-y-1">
-          <strong className="block font-semibold">⚡ Supabase Project Not Configured</strong>
-          <span>
-            Please configure your <code className="bg-white px-1 py-0.5 rounded border border-amber-300">VITE_SUPABASE_URL</code> and{' '}
-            <code className="bg-white px-1 py-0.5 rounded border border-amber-300">VITE_SUPABASE_ANON_KEY</code> in <code className="bg-white px-1 py-0.5 rounded border border-amber-300">client/.env</code>.
-          </span>
+      <SupabaseConnectModal
+        isOpen={showConnectModal}
+        onClose={() => {
+          setShowConnectModal(false);
+          loadUsers();
+        }}
+      />
+
+      {!isConfigured && (
+        <div className="mb-6 p-4 bg-teal-50 border border-teal-200 text-teal-950 text-xs rounded-xl flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <Database className="w-4 h-4 text-[#007c89] shrink-0" />
+            <span>
+              <strong>Running in Sandbox Demo:</strong> To synchronize real admin users with your live database, connect your Supabase project keys.
+            </span>
+          </div>
+          <button
+            onClick={() => setShowConnectModal(true)}
+            className="px-3 py-1.5 bg-[#007c89] hover:bg-[#006570] text-white font-bold rounded-lg transition-colors whitespace-nowrap cursor-pointer shadow-xs"
+          >
+            Connect Supabase
+          </button>
         </div>
       )}
 
