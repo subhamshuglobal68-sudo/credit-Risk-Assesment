@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { Database, Key, CheckCircle, AlertCircle, X, ExternalLink, ShieldCheck } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Database, Key, CheckCircle, AlertCircle, X, ExternalLink, ShieldCheck, Trash2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { getSupabaseConfig, clearClientCredentials } from '../lib/supabaseClient';
 
 export default function SupabaseConnectModal({ isOpen, onClose }) {
   const { saveCredentials, isConfigured, loginAsDemo } = useAuth();
@@ -10,6 +11,17 @@ export default function SupabaseConnectModal({ isOpen, onClose }) {
   const [success, setSuccess] = useState(false);
   const [testing, setTesting] = useState(false);
 
+  // Pre-populate with currently stored or environment credentials whenever modal opens
+  useEffect(() => {
+    if (isOpen) {
+      const cfg = getSupabaseConfig();
+      if (cfg.url) setUrl(cfg.url);
+      if (cfg.anonKey) setAnonKey(cfg.anonKey);
+      setError(null);
+      setSuccess(false);
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
@@ -17,8 +29,9 @@ export default function SupabaseConnectModal({ isOpen, onClose }) {
     setError(null);
     setSuccess(false);
 
-    const cleanUrl = url.trim();
-    const cleanKey = anonKey.trim();
+    // Sanitize: strip trailing slashes, remove accidental newlines or whitespace inside API key
+    const cleanUrl = url.trim().replace(/\/+$/, '');
+    const cleanKey = anonKey.trim().replace(/[\r\n\t\s]/g, '');
 
     if (!cleanUrl.startsWith('https://')) {
       setError('Supabase URL must start with https://');
@@ -31,31 +44,53 @@ export default function SupabaseConnectModal({ isOpen, onClose }) {
     }
 
     if (!cleanKey || cleanKey.length < 20) {
-      setError('Please provide a valid anon/public API key');
+      setError('Please provide a valid anon/public API key.');
       return;
     }
 
     setTesting(true);
     try {
-      // Test the URL ping
+      // Test URL reachability and API key validity against Supabase auth health endpoint
       const res = await fetch(`${cleanUrl}/auth/v1/health`, {
-        headers: { apikey: cleanKey },
-      }).catch(() => null);
+        headers: {
+          apikey: cleanKey,
+          Authorization: `Bearer ${cleanKey}`,
+        },
+      }).catch((err) => {
+        throw new Error(`Network error connecting to ${cleanUrl}: ${err.message}`);
+      });
 
-      if (res && !res.ok && res.status !== 401 && res.status !== 404) {
-        throw new Error(`Connection test responded with status ${res.status}`);
+      if (res && res.status === 401) {
+        throw new Error(
+          'Supabase rejected this API key ("Invalid API key"). Please ensure you copy the "anon public" API key (starts with eyJhbGci...) from Project Settings > API.'
+        );
+      }
+
+      if (res && !res.ok && res.status !== 404) {
+        throw new Error(`Supabase returned HTTP status ${res.status}`);
       }
 
       saveCredentials(cleanUrl, cleanKey);
       setSuccess(true);
       setTimeout(() => {
         onClose();
-      }, 1200);
+      }, 1000);
     } catch (err) {
       setError(err.message || 'Failed to verify Supabase project. Please verify your Project URL and Anon key.');
     } finally {
       setTesting(false);
     }
+  };
+
+  const handleClear = () => {
+    clearClientCredentials();
+    setUrl('');
+    setAnonKey('');
+    saveCredentials('', '');
+    setSuccess(true);
+    setTimeout(() => {
+      onClose();
+    }, 800);
   };
 
   return (
@@ -133,13 +168,24 @@ export default function SupabaseConnectModal({ isOpen, onClose }) {
             </div>
 
             <div className="pt-2 flex items-center justify-between gap-3">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 text-xs font-semibold text-stone-600 hover:text-stone-900 transition-colors"
-              >
-                Cancel
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-3 py-2 text-xs font-semibold text-stone-600 hover:text-stone-900 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleClear}
+                  className="px-2.5 py-1.5 text-[11px] font-semibold text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors flex items-center gap-1 cursor-pointer"
+                  title="Wipe saved credentials from browser storage"
+                >
+                  <Trash2 className="w-3 h-3" />
+                  Clear Keys
+                </button>
+              </div>
               <button
                 type="submit"
                 disabled={testing}

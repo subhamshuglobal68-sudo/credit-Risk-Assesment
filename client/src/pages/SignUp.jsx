@@ -144,9 +144,20 @@ export default function SignUp() {
         )}
 
         {error && (
-          <div className="mb-6 p-3.5 bg-red-50 border border-red-200 text-[#c0392b] text-sm rounded-md flex items-center gap-2.5">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{error}</span>
+          <div className="mb-6 p-3.5 bg-red-50 border border-red-200 text-[#c0392b] text-sm rounded-md flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{error}</span>
+            </div>
+            {(error.toLowerCase().includes('api key') || error.toLowerCase().includes('supabase') || error.toLowerCase().includes('credentials') || error.toLowerCase().includes('invalid') || error.toLowerCase().includes('failed to fetch')) && (
+              <button
+                type="button"
+                onClick={() => setShowConnectModal(true)}
+                className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-md transition-colors whitespace-nowrap cursor-pointer shadow-xs"
+              >
+                Re-enter API Key &rarr;
+              </button>
+            )}
           </div>
         )}
 
@@ -264,6 +275,17 @@ export default function SignUp() {
         <div className="mt-8 flex items-center gap-2 text-xs text-[#5c5c5c]">
           <Shield className="w-4 h-4 text-[#007c89] shrink-0" />
           <span>New accounts are automatically provisioned with the standard User role under PostgreSQL RLS policies.</span>
+        </div>
+
+        <div className="mt-6 pt-4 border-t border-stone-200 text-center">
+          <button
+            type="button"
+            onClick={() => setShowConnectModal(true)}
+            className="inline-flex items-center gap-1.5 text-xs text-stone-500 hover:text-[#007c89] transition-colors cursor-pointer font-medium"
+          >
+            <Database className="w-3.5 h-3.5 text-[#007c89]" />
+            <span>Need to update or re-enter your Supabase API keys? Click here</span>
+          </button>
         </div>
       </div>
 

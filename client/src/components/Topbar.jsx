@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ShieldCheck, LogOut, User as UserIcon } from 'lucide-react';
+import { ShieldCheck, LogOut, User as UserIcon, Database } from 'lucide-react';
+import SupabaseConnectModal from './SupabaseConnectModal';
 
 export default function Topbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [showConnectModal, setShowConnectModal] = useState(false);
 
   const handleLogout = async () => {
     await logout();
@@ -14,6 +16,11 @@ export default function Topbar() {
 
   return (
     <header className="w-full border-b border-[#e5e5e5] bg-white/80 backdrop-blur sticky top-0 z-50">
+      <SupabaseConnectModal
+        isOpen={showConnectModal}
+        onClose={() => setShowConnectModal(false)}
+      />
+
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         {/* Brand Logo */}
         <Link to="/" className="flex items-center gap-3 text-decoration-none group">
@@ -27,8 +34,8 @@ export default function Topbar() {
 
         {/* User Navigation / Status */}
         {user ? (
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 text-sm text-[#5c5c5c] bg-[#f9f9f8] px-3 py-1.5 rounded-full border border-[#e0e0e0]">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="hidden sm:flex items-center gap-2 text-sm text-[#5c5c5c] bg-[#f9f9f8] px-3 py-1.5 rounded-full border border-[#e0e0e0]">
               <UserIcon className="w-4 h-4 text-[#007c89]" />
               <span className="font-medium text-[#1d1d1d]">{user.email}</span>
               <span
@@ -48,7 +55,7 @@ export default function Topbar() {
                 className="text-xs font-semibold px-3 py-2 rounded-lg bg-[#e6f4f5] text-[#007c89] hover:bg-[#d8eef0] border border-[#007c89]/20 transition-colors flex items-center gap-1.5"
               >
                 <ShieldCheck className="w-4 h-4 text-[#007c89]" />
-                Auth & Security Center
+                <span className="hidden md:inline">Auth Center</span>
               </Link>
 
               <Link
@@ -65,20 +72,40 @@ export default function Topbar() {
                 className="text-xs font-semibold px-3 py-2 rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 transition-colors flex items-center gap-1.5"
               >
                 <ShieldCheck className="w-4 h-4 text-purple-600" />
-                Admin Console
+                <span className="hidden md:inline">Admin</span>
               </Link>
             )}
 
+            {/* Persistent Supabase Configuration Access */}
+            <button
+              onClick={() => setShowConnectModal(true)}
+              className="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-[#007c89]/30 text-[#007c89] hover:bg-[#007c89]/10 transition-colors flex items-center gap-1.5 cursor-pointer"
+              title="Configure or update Supabase Project Keys"
+            >
+              <Database className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Supabase Keys</span>
+            </button>
+
             <button
               onClick={handleLogout}
-              className="text-xs font-semibold px-3 py-2 rounded-lg text-[#5c5c5c] hover:text-[#c0392b] hover:bg-red-50 transition-colors flex items-center gap-1.5"
+              className="text-xs font-semibold px-3 py-2 rounded-lg text-[#5c5c5c] hover:text-[#c0392b] hover:bg-red-50 transition-colors flex items-center gap-1.5 cursor-pointer"
             >
               <LogOut className="w-4 h-4" />
-              Log out
+              <span className="hidden sm:inline">Log out</span>
             </button>
           </div>
         ) : (
           <div className="flex items-center gap-3">
+            {/* Persistent Supabase Configuration Access (Logged Out) */}
+            <button
+              onClick={() => setShowConnectModal(true)}
+              className="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-[#007c89]/40 text-[#007c89] hover:bg-[#007c89]/10 transition-colors flex items-center gap-1.5 cursor-pointer"
+              title="Configure or re-enter Supabase Project Keys"
+            >
+              <Database className="w-3.5 h-3.5" />
+              <span>Supabase Keys</span>
+            </button>
+
             <Link
               to="/login"
               className="text-sm font-semibold text-[#007c89] hover:underline px-3 py-1.5"
