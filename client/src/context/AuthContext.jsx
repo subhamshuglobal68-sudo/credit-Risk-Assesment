@@ -124,6 +124,11 @@ export function AuthProvider({ children }) {
 
   // 1. Password Login
   const signInWithPassword = async (email, password) => {
+    if (!isSupabaseConfigured) {
+      throw new Error(
+        'Supabase credentials are not configured yet. Please configure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in Vercel project settings and redeploy.'
+      );
+    }
     setError(null);
     const { data, error: authErr } = await supabase.auth.signInWithPassword({
       email: email.trim(),
@@ -146,11 +151,17 @@ export function AuthProvider({ children }) {
 
   // 2. Passwordless Email OTP Login
   const signInWithOtp = async (email) => {
+    if (!isSupabaseConfigured) {
+      throw new Error(
+        'Supabase credentials are not configured yet. Please configure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in Vercel project settings and redeploy.'
+      );
+    }
     setError(null);
     const { data, error: authErr } = await supabase.auth.signInWithOtp({
       email: email.trim(),
       options: {
         shouldCreateUser: false,
+        emailRedirectTo: `${window.location.origin}/verify-otp`,
       },
     });
 
@@ -163,11 +174,17 @@ export function AuthProvider({ children }) {
 
   // 3. User Sign Up
   const signUp = async (email, password, fullName) => {
+    if (!isSupabaseConfigured) {
+      throw new Error(
+        'Supabase credentials are not configured yet. Please configure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in Vercel project settings and redeploy.'
+      );
+    }
     setError(null);
     const { data, error: authErr } = await supabase.auth.signUp({
       email: email.trim(),
       password,
       options: {
+        emailRedirectTo: `${window.location.origin}/auth-center`,
         data: {
           full_name: fullName?.trim() || '',
         },
@@ -183,6 +200,11 @@ export function AuthProvider({ children }) {
 
   // 4. Verify 6-digit OTP (for signup verification, email OTP login, or password reset)
   const verifyOtp = async ({ email, token, type = 'email' }) => {
+    if (!isSupabaseConfigured) {
+      throw new Error(
+        'Supabase credentials are not configured yet. Please configure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in Vercel project settings and redeploy.'
+      );
+    }
     setError(null);
     const { data, error: authErr } = await supabase.auth.verifyOtp({
       email: email.trim(),
@@ -205,6 +227,11 @@ export function AuthProvider({ children }) {
 
   // 5. Resend OTP code
   const resendOtp = async ({ email, type = 'email' }) => {
+    if (!isSupabaseConfigured) {
+      throw new Error(
+        'Supabase credentials are not configured yet. Please configure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in Vercel project settings and redeploy.'
+      );
+    }
     setError(null);
     let result;
 
@@ -212,12 +239,20 @@ export function AuthProvider({ children }) {
       result = await supabase.auth.resend({
         type: 'signup',
         email: email.trim(),
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth-center`,
+        },
       });
     } else if (type === 'recovery') {
-      result = await supabase.auth.resetPasswordForEmail(email.trim());
+      result = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
     } else {
       result = await supabase.auth.signInWithOtp({
         email: email.trim(),
+        options: {
+          emailRedirectTo: `${window.location.origin}/verify-otp`,
+        },
       });
     }
 
@@ -230,6 +265,11 @@ export function AuthProvider({ children }) {
 
   // 6. OAuth Sign In (Google & Apple)
   const signInWithOAuth = async (provider) => {
+    if (!isSupabaseConfigured) {
+      throw new Error(
+        'Supabase credentials are not configured yet. Please configure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in Vercel project settings and redeploy.'
+      );
+    }
     setError(null);
     const { data, error: authErr } = await supabase.auth.signInWithOAuth({
       provider, // 'google' | 'apple'
@@ -247,8 +287,15 @@ export function AuthProvider({ children }) {
 
   // 7. Request Password Reset Email (OTP)
   const forgotPassword = async (email) => {
+    if (!isSupabaseConfigured) {
+      throw new Error(
+        'Supabase credentials are not configured yet. Please configure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in Vercel project settings and redeploy.'
+      );
+    }
     setError(null);
-    const { data, error: authErr } = await supabase.auth.resetPasswordForEmail(email.trim());
+    const { data, error: authErr } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
 
     if (authErr) {
       throw new Error(authErr.message || 'Failed to send password reset code.');
@@ -259,6 +306,11 @@ export function AuthProvider({ children }) {
 
   // 8. Update Password (after verifying recovery OTP)
   const resetPassword = async (newPassword) => {
+    if (!isSupabaseConfigured) {
+      throw new Error(
+        'Supabase credentials are not configured yet. Please configure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in Vercel project settings and redeploy.'
+      );
+    }
     setError(null);
     const { data, error: authErr } = await supabase.auth.updateUser({
       password: newPassword,

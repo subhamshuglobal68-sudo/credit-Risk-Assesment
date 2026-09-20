@@ -36,12 +36,23 @@ begin
       updated_at = now();
   return new;
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer set search_path = public;
 
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
+
+-- Helper function to check if the current user is an admin without triggering RLS recursion
+create or replace function public.is_admin()
+returns boolean as $$
+begin
+  return exists (
+    select 1 from public.profiles
+    where id = auth.uid() and role = 'admin'
+  );
+end;
+$$ language plpgsql security definer set search_path = public;
 
 alter table public.profiles enable row level security;
 
@@ -56,12 +67,7 @@ create policy "Users can view own profile"
 
 create policy "Admins can view all profiles"
   on public.profiles for select
-  using (
-    exists (
-      select 1 from public.profiles
-      where id = auth.uid() and role = 'admin'
-    )
-  );
+  using (public.is_admin());
 
 create policy "Users can update own profile"
   on public.profiles for update
@@ -70,9 +76,4 @@ create policy "Users can update own profile"
 
 create policy "Admins can update profiles"
   on public.profiles for update
-  using (
-    exists (
-      select 1 from public.profiles
-      where id = auth.uid() and role = 'admin'
-    )
-  );
+  using (public.is_admin());

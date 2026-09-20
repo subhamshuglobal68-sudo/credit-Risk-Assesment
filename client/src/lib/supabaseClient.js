@@ -7,8 +7,9 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 export const isSupabaseConfigured = Boolean(
   supabaseUrl &&
   supabaseAnonKey &&
-  !supabaseUrl.includes('placeholder-project') &&
-  !supabaseAnonKey.includes('placeholder-anon-key')
+  !supabaseUrl.includes('placeholder') &&
+  !supabaseAnonKey.includes('placeholder') &&
+  supabaseUrl.startsWith('https://')
 );
 
 if (!isSupabaseConfigured) {
